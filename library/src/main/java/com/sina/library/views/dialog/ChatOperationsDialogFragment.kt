@@ -10,8 +10,8 @@ import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.sina.library.R
 import com.sina.library.data.enums.OperationItem
+import com.sina.library.utility.R
 
 class ChatOperationsDialogFragment<T>(
     private val operations: List<T>,

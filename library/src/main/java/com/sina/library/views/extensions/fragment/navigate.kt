@@ -6,9 +6,9 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
-import com.sina.library.R
 import com.sina.library.data.enums.AnimationState
 import com.sina.library.data.enums.BackStackOption
+import com.sina.library.utility.R
 
 fun Fragment.navigateTo(
     destinationId: Int,

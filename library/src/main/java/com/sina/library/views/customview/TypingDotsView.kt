@@ -11,7 +11,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.isVisible
-import com.sina.library.R
+import com.sina.library.utility.R
 
 class TypingDotsView @JvmOverloads constructor(
     context: Context,

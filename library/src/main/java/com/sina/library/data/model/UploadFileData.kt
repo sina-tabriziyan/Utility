@@ -1,4 +1,4 @@
-package com.sina.library.network.upload
+package com.sina.library.data.model
 
 data class UploadFileData(
     val isProfile: Boolean,

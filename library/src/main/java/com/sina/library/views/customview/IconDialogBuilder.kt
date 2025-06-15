@@ -19,8 +19,8 @@ import android.widget.BaseAdapter
 import android.widget.GridView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.sina.library.R
 import com.sina.library.data.enums.AttachIcons
+import com.sina.library.utility.R
 import com.sina.library.views.extensions.ViewExtensions.setIconBuilder
 
 class IconDialogBuilder(fragment: Fragment) {
@@ -95,7 +95,8 @@ class IconDialogBuilder(fragment: Fragment) {
             val holder: ViewHolder
 
             if (convertView == null) {
-                view = LayoutInflater.from(context).inflate(R.layout.item_dialog_builder, parent, false)
+                view = LayoutInflater.from(context)
+                    .inflate(R.layout.item_dialog_builder, parent, false)
                 holder = ViewHolder(view)
                 view.tag = holder
             } else {

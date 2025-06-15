@@ -72,10 +72,10 @@ import coil3.request.target
 import coil3.size.Scale
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.sina.library.R
 import com.sina.library.views.customview.FontIcon
 import com.sina.library.views.extensions.StringExtension.fromURI
 import com.sina.library.data.model.ScreenShot
+import com.sina.library.utility.R
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileOutputStream

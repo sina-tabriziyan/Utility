@@ -20,7 +20,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.sina.library.R
+import com.sina.library.utility.R
 
 /**
  * Shows a video inside a PopupWindow using Media3 ExoPlayer.

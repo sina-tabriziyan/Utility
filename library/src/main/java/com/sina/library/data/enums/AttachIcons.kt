@@ -1,6 +1,6 @@
 package com.sina.library.data.enums
 
-import com.sina.library.R
+import com.sina.library.utility.R
 
 
 enum class AttachIcons(val iconName: String, val iconId: String, val iconColor: Int) {
