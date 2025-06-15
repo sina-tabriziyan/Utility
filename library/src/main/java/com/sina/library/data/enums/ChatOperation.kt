@@ -1,6 +1,7 @@
 package com.sina.library.data.enums
 
-import com.sina.library.R
+import com.sina.library.utility.R
+
 
 enum class ChatOperation(override val icon: String, override val resNameId: Int) : OperationItem {
     REPLY("f3dd", R.string.txt_reply),

@@ -11,9 +11,9 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.net.toUri
 import androidx.lifecycle.MutableLiveData
-import com.sina.library.R
 import com.sina.library.data.enums.FileType
 import com.sina.library.data.enums.MimeType
+import com.sina.library.utility.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

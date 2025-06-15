@@ -10,9 +10,9 @@ import android.widget.TextView
 import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.sina.library.R
 import com.sina.library.views.customview.FontIcon
 import com.sina.library.data.enums.OperationItem
+import com.sina.library.utility.R
 
 fun <T> showOperationPopup(
     anchorView: View,

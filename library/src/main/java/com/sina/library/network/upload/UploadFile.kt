@@ -8,6 +8,7 @@ package com.sina.library.network.upload
 import android.annotation.SuppressLint
 import android.os.Environment
 import android.util.Log
+import com.sina.library.data.model.UploadFileData
 import okhttp3.internal.tls.OkHostnameVerifier
 import java.io.BufferedReader
 import java.io.DataOutputStream

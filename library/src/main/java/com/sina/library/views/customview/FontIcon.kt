@@ -10,7 +10,7 @@ import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
-import com.sina.library.R
+import com.sina.library.utility.R
 
 
 class FontIcon @JvmOverloads constructor(

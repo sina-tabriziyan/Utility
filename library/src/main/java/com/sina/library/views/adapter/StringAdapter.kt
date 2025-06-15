@@ -6,8 +6,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.sina.library.R
-import com.sina.library.databinding.ItemStringsBinding
+import com.sina.library.utility.R
+import com.sina.library.utility.databinding.ItemStringsBinding
 
 class StringAdapter(private val click: (String) -> Unit) :
     ListAdapter<String, StringAdapter.Holder>(object : DiffUtil.ItemCallback<String>() {

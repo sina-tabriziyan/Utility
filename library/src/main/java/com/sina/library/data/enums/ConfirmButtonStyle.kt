@@ -3,6 +3,6 @@
  * Author: Sina Tabriziyan
  * @sina.tabriziyan@gmail.com
  */
-package com.sina.library.views.dialog.btmsheet.confirm
+package com.sina.library.data.enums
 
 enum class ConfirmButtonStyle { ROUNDED, NORMAL }

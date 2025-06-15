@@ -15,7 +15,7 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import com.sina.library.R
+import com.sina.library.utility.R
 
 class DotProgressBar : FrameLayout {
     private var margin: Int = convertDpToPixel(2f, context)

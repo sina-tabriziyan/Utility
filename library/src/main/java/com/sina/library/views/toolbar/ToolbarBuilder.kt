@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
-import com.sina.library.R
+import com.sina.library.utility.R
 
 class ToolbarBuilder(private val context: Context) {
     private var toolbar: Toolbar? = null
