@@ -30,6 +30,9 @@ jsoup = "1.17.2"
 
 koin = "4.0.0"
 
+cameraView = "1.4.2"
+kotlinxCoroutinesAndroid = "1.7.3"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -74,6 +77,15 @@ jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+
+camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraView" }
+camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraView" }
+camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraView" }
+camera-video = { module = "androidx.camera:camera-video", version.ref = "cameraView" }
+camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraView" }
+
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -94,3 +106,4 @@ media3 = [
     "media3-ui"
 ]
 coil = ["coil-network-okhttp", "coil3-coil"]
+camera = ["camera-core", "camera-lifecycle", "camera-video", "camera-view","camera-camera2"]

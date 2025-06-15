@@ -71,4 +71,7 @@ dependencies {
     implementation(libs.androidx.core.animation)
     implementation(libs.circularprogressbar)
     implementation(libs.jsoup)
+
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.bundles.camera)
 }
