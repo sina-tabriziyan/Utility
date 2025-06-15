@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <!-- Shadow layer -->
+        <shape>
+            <solid android:color="@color/bg_gray_transparent" /> <!-- Color for the shadow -->
+            <corners android:radius="15dp" />
+            <padding
+                android:bottom=".25dp"
+                android:left=".25dp"
+                android:right=".25dp"
+                android:top=".25dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom=".25dp"
+        android:left=".25dp"
+        android:right=".25dp"
+        android:top=".25dp">
+        <!-- Main background layer -->
+        <shape>
+            <solid android:color="@color/colorPrimary" /> <!-- Color for the button background -->
+            <corners android:radius="15dp" />
+        </shape>
+    </item>
+</layer-list>

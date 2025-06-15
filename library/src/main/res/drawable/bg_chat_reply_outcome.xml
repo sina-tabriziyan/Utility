@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bg_chat_outcome_reply" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+
+    <item
+        android:width="22dp"
+        android:bottom="0dp"
+        android:gravity="start"
+        android:left="0dp"
+        android:right="0dp"
+        android:top="0dp">
+
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bg_chat_income_reply" />
+            <corners
+                android:bottomLeftRadius="16dp"
+                android:bottomRightRadius="0dp"
+                android:topLeftRadius="16dp"
+                android:topRightRadius="0dp" />
+        </shape>
+    </item>
+
+</layer-list>

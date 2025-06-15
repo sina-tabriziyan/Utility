@@ -1,0 +1,37 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Layer 4: Outermost Circle (Light White) -->
+    <item android:left="0dp" android:right="0dp" android:top="0dp" android:bottom="0dp">
+        <shape>
+            <solid android:color="#33FFFFFF" /> <!-- Light White (20% opacity) -->
+            <corners android:radius="50dp" />
+            <size android:width="50dp" android:height="50dp" />
+        </shape>
+    </item>
+
+    <!-- Layer 3: Second Circle (Medium Light White) -->
+    <item android:left="5dp" android:right="5dp" android:top="5dp" android:bottom="5dp">
+        <shape>
+            <solid android:color="#66FFFFFF" /> <!-- Medium Light White (40% opacity) -->
+            <corners android:radius="50dp" />
+            <size android:width="40dp" android:height="40dp" />
+        </shape>
+    </item>
+
+    <!-- Layer 2: Third Circle (Dark White) -->
+    <item android:left="10dp" android:right="10dp" android:top="10dp" android:bottom="10dp">
+        <shape>
+            <solid android:color="#99FFFFFF" /> <!-- Dark White (60% opacity) -->
+            <corners android:radius="50dp" />
+            <size android:width="30dp" android:height="30dp" />
+        </shape>
+    </item>
+
+    <!-- Layer 1: Center Circle (Full White) -->
+    <item android:left="15dp" android:right="15dp" android:top="15dp" android:bottom="15dp">
+        <shape>
+            <solid android:color="#FFFFFFFF" /> <!-- Full White (100% opacity) -->
+            <corners android:radius="50dp" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+</layer-list>

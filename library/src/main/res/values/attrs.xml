@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircularCheckbox">
+        <attr name="isChecked" format="boolean" />
+        <attr name="circleColor" format="color" />
+        <attr name="checkmarkColor" format="color" />
+        <attr name="animationDuration" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="FontIcon">
+        <attr name="setIcon" format="string" />
+        <attr name="tint" format="color" />
+        <attr name="backgroundShape">
+            <enum name="oval" value="0" />
+            <enum name="rectangle" value="1" />
+            <enum name="rounded" value="2" />
+        </attr>
+        <attr name="backgroundColor" format="color" />
+        <attr name="ripple" format="boolean" />
+    </declare-styleable>
+</resources>
