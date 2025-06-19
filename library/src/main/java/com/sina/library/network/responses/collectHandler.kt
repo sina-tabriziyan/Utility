@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 
 suspend fun <T> Flow<T>.collectHandler(
-    onError: (Throwable) -> Unit,
+    onError: suspend (Throwable) -> Unit,
     onCollect: suspend (T) -> Unit
 ) {
     this
