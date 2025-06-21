@@ -20,6 +20,8 @@ class SimpleDialog<B : ViewBinding>(
     private var _binding: B? = null
     protected val binding get() = _binding!!
 
+    fun isShowing() = dialog?.isShowing ==true
+
     @SuppressLint("UseGetLayoutInflater")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = Dialog(requireContext())
