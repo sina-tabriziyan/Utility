@@ -58,7 +58,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
 
-
     implementation(libs.bundles.okhttp)
     implementation(libs.bundles.koin)
 

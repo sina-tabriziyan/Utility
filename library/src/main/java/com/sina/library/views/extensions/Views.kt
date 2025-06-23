@@ -61,6 +61,7 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil3.ImageLoader
+import coil3.network.NetworkFetcher
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.CachePolicy
@@ -76,6 +77,9 @@ import com.sina.library.views.customview.FontIcon
 import com.sina.library.views.extensions.StringExtension.fromURI
 import com.sina.library.data.model.ScreenShot
 import com.sina.library.utility.R
+import okhttp3.Address
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileOutputStream
@@ -133,7 +137,8 @@ object ViewExtensions {
 
     /** Show or hide the keyboard inside a Fragment */
     fun Fragment.toggleKeyboard(editText: AppCompatEditText, show: Boolean) {
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm =
+            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         if (show) imm.showSoftInput(editText, InputMethodManager.SHOW_FORCED)
         else imm.hideSoftInputFromWindow(editText.windowToken, 0)
     }
@@ -144,7 +149,8 @@ object ViewExtensions {
     inline fun SearchView.onQueryChange(crossinline listener: (String) -> Unit) {
         setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = true
-            override fun onQueryTextChange(newText: String?) = listener(newText.orEmpty()).let { true }
+            override fun onQueryTextChange(newText: String?) =
+                listener(newText.orEmpty()).let { true }
         })
     }
 
@@ -243,9 +249,6 @@ object ViewExtensions {
             start()
         }
     }
-
-
-
 
 
     fun View.setDrawableClickListener(
@@ -447,7 +450,11 @@ object ViewExtensions {
         }
         var bitmap: Bitmap? = null
         try {
-            bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.minimumHeight, Bitmap.Config.ARGB_8888)
+            bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth,
+                drawable.minimumHeight,
+                Bitmap.Config.ARGB_8888
+            )
             val canvas = Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)
@@ -456,6 +463,7 @@ object ViewExtensions {
         }
         return bitmap
     }
+
     fun AppCompatEditText.onTyping(action: (Boolean) -> Unit) {
         this.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -513,6 +521,7 @@ object ViewExtensions {
         this.isSelected = true // Crucial to trigger marquee effect
         this.setHorizontallyScrolling(true) // Enable horizontal scrolling
     }
+
     fun AppCompatEditText.editTextTyping(typing: () -> Unit, clearTyping: () -> Unit) {
         this.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -549,6 +558,7 @@ object ViewExtensions {
             }
         })
     }
+
     fun String.extractMessageAndImage(): Pair<String?, String?> {
         val doc = Jsoup.parse(this)
         val message = doc.select("p").first()?.text()
@@ -567,13 +577,15 @@ object ViewExtensions {
 
     fun Fragment.showKeyboardAndFocusEditText(editText: AppCompatEditText) {
         editText.requestFocus()
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm =
+            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY)
     }
 
     fun Fragment.closeKeyboardAndFocusEditText(editText: AppCompatEditText) {
         editText.requestFocus()
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm =
+            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(editText.windowToken, 0)
     }
 
@@ -612,11 +624,13 @@ object ViewExtensions {
             }
         })
     }
+
     fun RecyclerView.scrollToBottom() {
         val layoutManager = this.layoutManager as? LinearLayoutManager
         if (layoutManager != null)
             this.post { layoutManager.smoothScrollToPosition(this, RecyclerView.State(), 0) }
     }
+
     fun RecyclerView.scrollToFirst() {
         val adapter = this.adapter
         val layoutManager = this.layoutManager as? LinearLayoutManager
@@ -646,10 +660,12 @@ object ViewExtensions {
 
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                visibility = if (dy < 0 || recyclerView.canScrollVertically(1)) View.VISIBLE else View.GONE
+                visibility =
+                    if (dy < 0 || recyclerView.canScrollVertically(1)) View.VISIBLE else View.GONE
             }
         })
     }
+
     fun View.onClickListener(action: () -> Unit) {
         setOnClickListener { action() }
     }
@@ -673,6 +689,7 @@ object ViewExtensions {
     fun View.invisible() {
         visibility = View.INVISIBLE
     }
+
     fun Uri.createBitmap(context: Context): Bitmap? {
         val contentResolver: ContentResolver = context.contentResolver
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -694,7 +711,8 @@ object ViewExtensions {
             return null
         }
 
-        val scale = (screenShotData.width.toFloat() / srcWidth).coerceAtLeast(screenShotData.height.toFloat() / srcHeight)
+        val scale =
+            (screenShotData.width.toFloat() / srcWidth).coerceAtLeast(screenShotData.height.toFloat() / srcHeight)
         val m = Matrix()
         m.setScale(scale, scale)
 
@@ -706,27 +724,38 @@ object ViewExtensions {
         srcX = srcX.coerceAtMost(srcWidth - srcCroppedW).coerceAtLeast(0)
         srcY = srcY.coerceAtMost(srcHeight - srcCroppedH).coerceAtLeast(0)
 
-        val croppedBitmap = Bitmap.createBitmap(originalBitmap, srcX, srcY, srcCroppedW, srcCroppedH)
+        val croppedBitmap =
+            Bitmap.createBitmap(originalBitmap, srcX, srcY, srcCroppedW, srcCroppedH)
         originalBitmap.recycle()
 
         // ✅ Fix: Use MediaStore to save the image without modifying _data
         val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "mapimage_${screenShotData.latitude}_${screenShotData.longitude}.jpg")
+            put(
+                MediaStore.Images.Media.DISPLAY_NAME,
+                "mapimage_${screenShotData.latitude}_${screenShotData.longitude}.jpg"
+            )
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/${screenShotData.rootFolder}/${screenShotData.childFolder}")
+            put(
+                MediaStore.Images.Media.RELATIVE_PATH,
+                "Pictures/${screenShotData.rootFolder}/${screenShotData.childFolder}"
+            )
             put(MediaStore.Images.Media.IS_PENDING, 1)
         }
 
         val contentResolver = context.contentResolver
-        val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            ?: return null // ✅ Ensure URI is not null
+        val imageUri =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                ?: return null // ✅ Ensure URI is not null
 
         try {
             contentResolver.openOutputStream(imageUri)?.use { outputStream ->
                 croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
             }
             contentValues.clear()
-            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0) // ✅ Mark the image as available
+            contentValues.put(
+                MediaStore.Images.Media.IS_PENDING,
+                0
+            ) // ✅ Mark the image as available
             contentResolver.update(imageUri, contentValues, null, null)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -738,7 +767,14 @@ object ViewExtensions {
 
         return imageUri
     }
-    fun saveImageToFileSystem(context: Context, bitmap: Bitmap, fileName: String, rootFolder: String, childFolder: String): Uri? {
+
+    fun saveImageToFileSystem(
+        context: Context,
+        bitmap: Bitmap,
+        fileName: String,
+        rootFolder: String,
+        childFolder: String
+    ): Uri? {
         val rootDir = File(Environment.getExternalStorageDirectory(), rootFolder)
         val subDir = File(rootDir, childFolder)
 
@@ -755,23 +791,40 @@ object ViewExtensions {
             FileOutputStream(file).use { outputStream ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
             }
-            MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf("image/jpeg"), null)
+            MediaScannerConnection.scanFile(
+                context,
+                arrayOf(file.absolutePath),
+                arrayOf("image/jpeg"),
+                null
+            )
             file.toUri()
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
-    fun saveImageToMediaStore(context: Context, bitmap: Bitmap, fileName: String, primaryFolder: String, subFolder: String): Uri? {
+
+    fun saveImageToMediaStore(
+        context: Context,
+        bitmap: Bitmap,
+        fileName: String,
+        primaryFolder: String,
+        subFolder: String
+    ): Uri? {
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "$primaryFolder/$subFolder") // ✅ Save inside Pictures/Teamyar
+            put(
+                MediaStore.Images.Media.RELATIVE_PATH,
+                "$primaryFolder/$subFolder"
+            ) // ✅ Save inside Pictures/Teamyar
             put(MediaStore.Images.Media.IS_PENDING, 1)
         }
 
         val contentResolver = context.contentResolver
-        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return null
+        val uri =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                ?: return null
 
         return try {
             contentResolver.openOutputStream(uri)?.use { outputStream ->
@@ -787,6 +840,7 @@ object ViewExtensions {
             null
         }
     }
+
     fun cropImage(context: Context, view: View, screenShotData: ScreenShot): Uri? {
         val originalBitmap = view.drawToBitmap()
 
@@ -798,7 +852,8 @@ object ViewExtensions {
             return null
         }
 
-        val scale = (screenShotData.width.toFloat() / srcWidth).coerceAtLeast(screenShotData.height.toFloat() / srcHeight)
+        val scale =
+            (screenShotData.width.toFloat() / srcWidth).coerceAtLeast(screenShotData.height.toFloat() / srcHeight)
         val m = Matrix()
         m.setScale(scale, scale)
 
@@ -810,17 +865,30 @@ object ViewExtensions {
         srcX = srcX.coerceAtMost(srcWidth - srcCroppedW).coerceAtLeast(0)
         srcY = srcY.coerceAtMost(srcHeight - srcCroppedH).coerceAtLeast(0)
 
-        val croppedBitmap = Bitmap.createBitmap(originalBitmap, srcX, srcY, srcCroppedW, srcCroppedH)
+        val croppedBitmap =
+            Bitmap.createBitmap(originalBitmap, srcX, srcY, srcCroppedW, srcCroppedH)
         originalBitmap.recycle()
 
         val fileName = "mapimage_${screenShotData.latitude}_${screenShotData.longitude}.jpg"
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // ✅ Android 10+ (Scoped Storage, save inside `Pictures/Teamyar`)
-            saveImageToMediaStore(context, croppedBitmap, fileName, "Pictures", "${screenShotData.rootFolder}/${screenShotData.childFolder}")
+            saveImageToMediaStore(
+                context,
+                croppedBitmap,
+                fileName,
+                "Pictures",
+                "${screenShotData.rootFolder}/${screenShotData.childFolder}"
+            )
         } else {
             // ✅ Android 9 and below (Direct File System)
-            saveImageToFileSystem(context, croppedBitmap, fileName, screenShotData.rootFolder, screenShotData.childFolder)
+            saveImageToFileSystem(
+                context,
+                croppedBitmap,
+                fileName,
+                screenShotData.rootFolder,
+                screenShotData.childFolder
+            )
         }
     }
 
@@ -873,6 +941,7 @@ object ViewExtensions {
         searchHintIcon.setColorFilter(closeIconColor)
 
     }
+
     fun TextView.highlightTextNew(textToHighlight: String, highlightColor: Int, defaultColor: Int) {
         // Get the full text from the TextView
         val fullText = this.text.toString()
@@ -892,7 +961,12 @@ object ViewExtensions {
             val endIndex = startIndex + textToHighlight.length
             val spannableString = SpannableString(fullText)
             val colorSpan = ForegroundColorSpan(highlightColor)
-            spannableString.setSpan(colorSpan, startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannableString.setSpan(
+                colorSpan,
+                startIndex,
+                endIndex,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
             this.text = spannableString
         } else {
             // If text is not found, reset text color to default
@@ -900,7 +974,13 @@ object ViewExtensions {
             this.text = fullText
         }
     }
-    fun TextView.setAbbreviatedText(context: Context, text: String, maxSizeTablet: Int = 60, maxSizePhone: Int = 30) {
+
+    fun TextView.setAbbreviatedText(
+        context: Context,
+        text: String,
+        maxSizeTablet: Int = 60,
+        maxSizePhone: Int = 30
+    ) {
         val metrics = context.resources.displayMetrics
         val maxLength =
             if (sqrt(
@@ -916,17 +996,26 @@ object ViewExtensions {
         }
     }
 
+    object CoilImageLoaderProvider {
+        lateinit var imageLoader: ImageLoader
+            private set
+
+        fun init(context: Context) {
+            imageLoader = ImageLoader.Builder(context)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .build()
+        }
+    }
+
     fun ImageView.showImageWithCoil(
         path: String,
-        sharedPrefValue: String
+        address: String,
+        version : String,
+        sid: String
     ) {
-        val headers = NetworkHeaders.Builder()
-            .set("Cookie", sharedPrefValue)
-            .build()
-
         val request = ImageRequest.Builder(context)
             .data(path)
-            .httpHeaders(headers)
             .crossfade(true)
             .scale(Scale.FILL)
             .diskCachePolicy(CachePolicy.ENABLED)
@@ -934,36 +1023,18 @@ object ViewExtensions {
             .placeholder(R.drawable.ic_video_placeholder)
             .error(R.drawable.ic_video_error)
             .target(this)
+            .httpHeaders(
+                NetworkHeaders.Builder()
+                    .set("Cookie", sid)
+                    .set("Referer", address)
+                    .set("User-Agent", "TeamyarMobileApp/Android/${version}")
+                    .build()
+            )
             .build()
-
-        val imageLoader = ImageLoader(context)
-        imageLoader.enqueue(request)
+        CoilImageLoaderProvider.imageLoader.enqueue(request)
     }
 
-//    fun ImageView.showImageWithCoil(
-//        baseUrl: String,
-//        path: String,
-//        imgId: String?,
-//        sharedPrefValue: String
-//    ) {
-//        val fullUrl = "https://$baseUrl$path$imgId"
-//
-//        val imageRequest = ImageRequest.Builder(this.context)
-//            .data(fullUrl)
-//            .headers(
-//                Headers.Builder()
-//                    .add("Cookie", sharedPrefValue)
-//                    .build()
-//            )
-//            .diskCachePolicy(CachePolicy.DISABLED) // equivalent to DiskCacheStrategy.NONE
-//            .memoryCachePolicy(CachePolicy.ENABLED) // optional
-//            .target(this)
-//            .transformations(coil.transform.CircleCropTransformation())
-//            .build()
-//
-//        context.imageLoader.enqueue(imageRequest)
-//    }
-    fun PlayerView.loadThumbnailIntoPlayerView( videoUri:Uri) {
+    fun PlayerView.loadThumbnailIntoPlayerView(videoUri: Uri) {
         // Initialize ExoPlayer
         val player = ExoPlayer.Builder(this.context).build()
 
@@ -995,6 +1066,7 @@ object ViewExtensions {
         Log.e("TAG", "setVisibleOrGone: $dataModify")
         this.visibility = if (dataModify.equals("0")) View.GONE else View.VISIBLE
     }
+
     fun FontIcon.makeMovable() {
         var dX = 0f
         var dY = 0f
@@ -1082,6 +1154,7 @@ object ViewExtensions {
             }
         }
     }
+
     fun showToast(context: Context, msgRes: Int) {
         val typeface = Typeface.createFromAsset(context.assets, "IRANSansMobile(NoEn)_Light.ttf")
         val inflater = LayoutInflater.from(context)
@@ -1096,6 +1169,7 @@ object ViewExtensions {
         toast.view = layout
         toast.show()
     }
+
     fun showToast(context: Context, msgRes: String) {
         val typeface = Typeface.createFromAsset(context.assets, "IRANSansMobile(NoEn)_Light.ttf")
         val inflater = LayoutInflater.from(context)
@@ -1110,6 +1184,7 @@ object ViewExtensions {
         toast.view = layout
         toast.show()
     }
+
     fun FontIcon.showAgain() {
         // Reset visibility
         visibility = View.VISIBLE
