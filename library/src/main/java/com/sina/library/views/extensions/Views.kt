@@ -931,6 +931,7 @@ object ViewExtensions {
         searchTextView?.setHintTextColor(color)
     }
 
+
     fun SearchView.applyStyling(textColor: Int, hintTextColor: Int, closeIconColor: Int) {
         maxWidth = Integer.MAX_VALUE
         val searchTextView = findViewById<TextView>(androidx.appcompat.R.id.search_src_text)
@@ -1006,18 +1007,17 @@ object ViewExtensions {
         baseUrl: String,
         sid: String,
         version: String,
-        placeholder: Int? = R.drawable.ic_video_placeholder,
-        errorDrawable: Int? = R.drawable.ic_video_placeholder
+        isMail: Boolean,
     ) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            post { loadUnsafeImage(path, baseUrl, sid,version, placeholder, errorDrawable) }
+            post { loadUnsafeImage(path, baseUrl, sid, version, isMail) }
             return
         }
 
         val context = this.context.applicationContext ?: return
         try {
             val okHttpClient = provideUnsafeImageClient(
-              address =   "https://${baseUrl}",
+                address = "https://${baseUrl}",
                 sid = sid,
                 version = version
             )
@@ -1035,12 +1035,18 @@ object ViewExtensions {
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .apply {
-                    placeholder?.let {
-                        placeholder(ContextCompat.getDrawable(context, it))
-                    }
-                    errorDrawable?.let {
-                        error(ContextCompat.getDrawable(context,it))
-                    }
+                    placeholder(
+                        ContextCompat.getDrawable(
+                            context,
+                            if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
+                        )
+                    )
+                    error(
+                        ContextCompat.getDrawable(
+                            context,
+                            if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
+                        )
+                    )
                 }
                 .transformations(CircleCropTransformation())
                 .target(this)
