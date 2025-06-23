@@ -64,18 +64,22 @@ import coil3.ImageLoader
 import coil3.network.NetworkFetcher
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import coil3.request.target
+import coil3.request.transformations
 import coil3.size.Scale
+import coil3.transform.CircleCropTransformation
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.sina.library.views.customview.FontIcon
 import com.sina.library.views.extensions.StringExtension.fromURI
 import com.sina.library.data.model.ScreenShot
+import com.sina.library.network.client.provideUnsafeImageClient
 import com.sina.library.utility.R
 import okhttp3.Address
 import okhttp3.Interceptor
@@ -195,7 +199,7 @@ object ViewExtensions {
     fun Toolbar.setup(title: String, enableBackButton: Boolean = true) {
         this.title = title
         if (enableBackButton) {
-            setNavigationOnClickListener { (context as? android.app.Activity)?.onBackPressed() }
+            setNavigationOnClickListener { (context as? Activity)?.onBackPressed() }
         }
     }
 
@@ -996,26 +1000,70 @@ object ViewExtensions {
         }
     }
 
-    object CoilImageLoaderProvider {
-        lateinit var imageLoader: ImageLoader
-            private set
 
-        fun init(context: Context) {
-            imageLoader = ImageLoader.Builder(context)
+    fun ImageView.loadUnsafeImage(
+        path: String,
+        baseUrl: String,
+        sid: String,
+        version: String,
+        placeholder: Int? = R.drawable.ic_video_placeholder,
+        errorDrawable: Int? = R.drawable.ic_video_placeholder
+    ) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            post { loadUnsafeImage(path, baseUrl, sid,version, placeholder, errorDrawable) }
+            return
+        }
+
+        val context = this.context.applicationContext ?: return
+        try {
+            val okHttpClient = provideUnsafeImageClient(
+              address =   "https://${baseUrl}",
+                sid = sid,
+                version = version
+            )
+
+            val imageLoader = ImageLoader.Builder(this.context)
+                .components {
+                    add(OkHttpNetworkFetcherFactory(okHttpClient))
+                }
+                .build()
+
+            val request = ImageRequest.Builder(context)
+                .data(path)
+                .crossfade(true)
+                .scale(Scale.FILL)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
+                .apply {
+                    placeholder?.let {
+                        placeholder(ContextCompat.getDrawable(context, it))
+                    }
+                    errorDrawable?.let {
+                        error(ContextCompat.getDrawable(context,it))
+                    }
+                }
+                .transformations(CircleCropTransformation())
+                .target(this)
                 .build()
+
+            imageLoader.enqueue(request)
+        } catch (e: Exception) {
+            Log.e("CoilError", "Failed to load image", e)
         }
+
     }
 
     fun ImageView.showImageWithCoil(
         path: String,
-        address: String,
-        version : String,
-        sid: String
+        sharedPrefValue: String
     ) {
+        val headers = NetworkHeaders.Builder()
+            .set("Cookie", sharedPrefValue)
+            .build()
+
         val request = ImageRequest.Builder(context)
             .data(path)
+            .httpHeaders(headers)
             .crossfade(true)
             .scale(Scale.FILL)
             .diskCachePolicy(CachePolicy.ENABLED)
@@ -1023,15 +1071,10 @@ object ViewExtensions {
             .placeholder(R.drawable.ic_video_placeholder)
             .error(R.drawable.ic_video_error)
             .target(this)
-            .httpHeaders(
-                NetworkHeaders.Builder()
-                    .set("Cookie", sid)
-                    .set("Referer", address)
-                    .set("User-Agent", "TeamyarMobileApp/Android/${version}")
-                    .build()
-            )
             .build()
-        CoilImageLoaderProvider.imageLoader.enqueue(request)
+
+        val imageLoader = ImageLoader(context)
+        imageLoader.enqueue(request)
     }
 
     fun PlayerView.loadThumbnailIntoPlayerView(videoUri: Uri) {
