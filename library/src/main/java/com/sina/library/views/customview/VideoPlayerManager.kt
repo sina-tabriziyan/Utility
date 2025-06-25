@@ -10,11 +10,8 @@ import android.widget.ImageView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import coil3.request.error
-import coil3.request.placeholder
-import coil3.request.target
+import coil.ImageLoader
+import coil.request.ImageRequest
 import com.sina.library.utility.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
