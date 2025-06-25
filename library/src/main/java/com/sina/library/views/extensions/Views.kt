@@ -60,30 +60,20 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import coil3.ImageLoader
-import coil3.network.NetworkFetcher
-import coil3.network.NetworkHeaders
-import coil3.network.httpHeaders
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import coil3.request.CachePolicy
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import coil3.request.error
-import coil3.request.placeholder
-import coil3.request.target
-import coil3.request.transformations
-import coil3.size.Scale
-import coil3.transform.CircleCropTransformation
+import coil.ImageLoader
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import coil.size.Scale
+import coil.transform.CircleCropTransformation
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.sina.library.views.customview.FontIcon
-import com.sina.library.views.extensions.StringExtension.fromURI
 import com.sina.library.data.model.ScreenShot
 import com.sina.library.network.client.provideUnsafeImageClient
 import com.sina.library.utility.R
-import okhttp3.Address
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
+import com.sina.library.views.customview.FontIcon
+import com.sina.library.views.extensions.StringExtension.fromURI
+import okhttp3.Headers
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileOutputStream
@@ -1023,9 +1013,7 @@ object ViewExtensions {
             )
 
             val imageLoader = ImageLoader.Builder(this.context)
-                .components {
-                    add(OkHttpNetworkFetcherFactory(okHttpClient))
-                }
+                .callFactory { okHttpClient }
                 .build()
 
             val request = ImageRequest.Builder(context)
@@ -1059,17 +1047,71 @@ object ViewExtensions {
 
     }
 
+
+    fun Chip.loadUnsafeChipIcon(
+        imgPath: String,
+        baseUrl: String,
+        sid: String,
+        version: String,
+        isMail: Boolean
+    ) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            post { loadUnsafeChipIcon(imgPath, baseUrl, sid, version, isMail) }
+            return
+        }
+
+        val context = this.context.applicationContext ?: return
+
+        try {
+            val okHttpClient = provideUnsafeImageClient(
+                address = "https://$baseUrl",
+                sid = sid,
+                version = version
+            )
+
+            val imageLoader = ImageLoader.Builder(context)
+                .callFactory {
+                    okHttpClient
+                }
+                .build()
+
+            val request = ImageRequest.Builder(context)
+                .data(imgPath)
+                .crossfade(true)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .transformations(CircleCropTransformation())
+                .target(onSuccess = { drawable: Drawable ->
+                    chipIcon = drawable
+
+                }, onStart = {
+                    chipIcon = ContextCompat.getDrawable(
+                        context,
+                        if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
+                    )
+                }, onError = {
+                    chipIcon = ContextCompat.getDrawable(
+                        context,
+                        if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
+                    )
+                }).build()
+            imageLoader.enqueue(request)
+        } catch (e: Exception) {
+            Log.e("CoilError", "Failed to load chip icon", e)
+        }
+    }
+
     fun ImageView.showImageWithCoil(
         path: String,
         sharedPrefValue: String
     ) {
-        val headers = NetworkHeaders.Builder()
-            .set("Cookie", sharedPrefValue)
+        val headers = Headers.Builder()
+            .add("Cookie", sharedPrefValue)
             .build()
 
         val request = ImageRequest.Builder(context)
             .data(path)
-            .httpHeaders(headers)
+            .headers(headers)
             .crossfade(true)
             .scale(Scale.FILL)
             .diskCachePolicy(CachePolicy.ENABLED)

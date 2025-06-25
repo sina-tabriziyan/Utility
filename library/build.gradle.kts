@@ -63,13 +63,17 @@ dependencies {
 
     implementation(libs.bundles.media3)
     implementation(libs.bundles.fragment)
-    implementation(libs.bundles.coil)
+//    implementation(libs.bundles.coil)
     implementation(libs.bundles.navigation)
     implementation(libs.bundles.retrofit)
     implementation(libs.lottie)
     implementation(libs.androidx.core.animation)
     implementation(libs.circularprogressbar)
     implementation(libs.jsoup)
+
+    implementation("io.coil-kt:coil:2.4.0")
+
+
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.bundles.camera)

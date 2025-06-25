@@ -47,5 +47,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
 
-implementation(project(":library"))
+    implementation("com.github.sina-tabriziyan:Utility:0.1.1")
 }
