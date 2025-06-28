@@ -38,6 +38,8 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
@@ -181,6 +183,36 @@ object ViewExtensions {
                 }
             }
         })
+    }
+
+    fun FloatingActionButton.animateVisibility(show: Boolean, duration: Long = 200) {
+        if (show && visibility != View.VISIBLE) {
+            // Prepare for animation
+            alpha = 0f
+            scaleX = 0.8f
+            scaleY = 0.8f
+            visibility = View.VISIBLE
+
+            animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(duration)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+
+        } else if (!show && visibility == View.VISIBLE) {
+            animate()
+                .alpha(0f)
+                .scaleX(0.8f)
+                .scaleY(0.8f)
+                .setDuration(duration)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction {
+                    visibility = View.INVISIBLE
+                }
+                .start()
+        }
     }
 
     // ---------------- Toolbar Extensions ----------------
