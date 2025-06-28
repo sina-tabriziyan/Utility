@@ -1035,6 +1035,7 @@ object ViewExtensions {
                             if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
                         )
                     )
+                    crossfade(200)
                 }
                 .transformations(CircleCropTransformation())
                 .target(this)
