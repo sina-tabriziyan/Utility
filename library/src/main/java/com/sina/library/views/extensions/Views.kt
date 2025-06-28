@@ -1023,15 +1023,11 @@ object ViewExtensions {
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .apply {
-                    placeholder(
-                        ContextCompat.getDrawable(
-                            context,
+                    placeholder(ContextCompat.getDrawable(context,
                             if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
                         )
                     )
-                    error(
-                        ContextCompat.getDrawable(
-                            context,
+                    error(ContextCompat.getDrawable(context,
                             if (isMail) R.drawable.no_user_male else R.drawable.no_user_female
                         )
                     )
