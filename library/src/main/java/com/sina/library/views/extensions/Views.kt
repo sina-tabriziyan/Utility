@@ -39,6 +39,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateInterpolator
+import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.view.inputmethod.InputMethodManager
@@ -1314,5 +1315,9 @@ object ViewExtensions {
             .alpha(1f)
             .setDuration(800)
             .start()
+    }
+
+    fun AppCompatEditText.animateShake() {
+        startAnimation(AnimationUtils.loadAnimation(context, R.anim.shake_animation))
     }
 }
