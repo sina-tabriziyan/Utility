@@ -44,7 +44,6 @@ private fun Fragment.buildNavOptions(
         return null
     }
     val navOptionsBuilder = NavOptions.Builder()
-
     when (backStack) {
         BackStackOption.CLEAR_CURRENT -> {
             navOptionsBuilder.setPopUpTo(
@@ -59,6 +58,14 @@ private fun Fragment.buildNavOptions(
 
         BackStackOption.NO_CLEAR -> {
             // Do nothing
+        }
+
+        BackStackOption.DESTROY -> {
+            // Remove Fragment A from back stack AND destroy it
+            navOptionsBuilder.setPopUpTo(
+                findNavController().currentDestination?.id ?: return null,
+                inclusive = true  // Critical: Destroys Fragment A
+            )
         }
     }
 
