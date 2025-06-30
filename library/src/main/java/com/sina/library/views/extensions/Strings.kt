@@ -5,7 +5,9 @@
  */
 package com.sina.library.views.extensions
 
+import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -116,4 +118,12 @@ object StringExtension {
         return matchResult?.groups?.get(2)?.value ?: matchResult?.groups?.get(4)?.value ?: ""
     }
 
+    inline fun <reified T : Parcelable> Bundle.getParcelableArrayListCompat(key: String): ArrayList<T>? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getParcelableArrayList(key, T::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getParcelableArrayList(key)
+        }
+    }
 }
