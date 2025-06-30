@@ -20,12 +20,14 @@ import android.graphics.Matrix
 import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.pdf.PdfRenderer
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.Spannable
@@ -1320,4 +1322,37 @@ object ViewExtensions {
     fun AppCompatEditText.animateShake() {
         startAnimation(AnimationUtils.loadAnimation(context, R.anim.shake_animation))
     }
+
+    fun generatePDFThumbnail(pdfFile: File): Bitmap? {
+        var bitmap: Bitmap? = null
+        try {
+            // Open the PDF file from the file descriptor
+            val parcelFileDescriptor = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+            val pdfRenderer = PdfRenderer(parcelFileDescriptor)
+
+            if (pdfRenderer.pageCount > 0) {
+                // Open the first page of the PDF
+                val page = pdfRenderer.openPage(0)
+                val width = page.width
+                val height = page.height
+
+                // Create a bitmap with the size of the page
+                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+                // Render the page onto the bitmap
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+
+                // Close the page
+                page.close()
+            }
+
+            // Close the PdfRenderer
+            pdfRenderer.close()
+            parcelFileDescriptor.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return bitmap
+    }
+
 }
