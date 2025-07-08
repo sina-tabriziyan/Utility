@@ -77,14 +77,18 @@ class FontIcon @JvmOverloads constructor(
                         else -> BackgroundShape.RECTANGLE
                     }
 
-                    bgColor = typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
+                    bgColor =
+                        typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
                     enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
                 } else {
                     enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
                     if (enableRipple && this.background != null && this.background !is RippleDrawable &&
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        val rippleColorStateList = ColorStateList.valueOf(Color.parseColor("#33000000"))
-                        this.background = RippleDrawable(rippleColorStateList, this.background, null)
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                    ) {
+                        val rippleColorStateList =
+                            ColorStateList.valueOf(Color.parseColor("#33000000"))
+                        this.background =
+                            RippleDrawable(rippleColorStateList, this.background, null)
                     }
                 }
             } finally {
@@ -141,14 +145,17 @@ class FontIcon @JvmOverloads constructor(
                 super.setText(text + "\n" + icon, BufferType.NORMAL)
                 gravity = Gravity.CENTER
             }
+
             TextPosition.BOTTOM -> {
                 super.setText(icon + "\n" + text, BufferType.NORMAL)
                 gravity = Gravity.CENTER
             }
+
             TextPosition.START -> {
                 super.setText(text + " " + icon, BufferType.NORMAL)
                 gravity = Gravity.CENTER_VERTICAL or Gravity.START
             }
+
             TextPosition.END -> {
                 super.setText(icon + " " + text, BufferType.NORMAL)
                 gravity = Gravity.CENTER_VERTICAL or Gravity.START
