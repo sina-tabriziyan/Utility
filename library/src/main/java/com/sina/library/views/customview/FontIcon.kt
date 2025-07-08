@@ -135,6 +135,7 @@ class FontIcon @JvmOverloads constructor(
 
         val text = customText ?: ""
 
+
         when (textPosition) {
             TextPosition.TOP -> {
                 super.setText(text + "\n" + icon, BufferType.NORMAL)
