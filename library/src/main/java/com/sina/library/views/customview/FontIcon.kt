@@ -9,7 +9,6 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.util.AttributeSet
-import android.view.Gravity
 import androidx.appcompat.widget.AppCompatTextView
 import com.sina.library.utility.R
 
@@ -24,14 +23,6 @@ class FontIcon @JvmOverloads constructor(
         OVAL, RECTANGLE, ROUNDED
     }
 
-    enum class TextPosition {
-        TOP, BOTTOM, START, END
-    }
-
-    private var iconCode: String? = null
-    private var textPosition: TextPosition = TextPosition.BOTTOM
-    private var customText: String? = null
-
     init {
         // Load the custom font
         typeface = Typeface.createFromAsset(context.assets, "fonticons.ttf")
@@ -40,29 +31,17 @@ class FontIcon @JvmOverloads constructor(
         var desiredShape = BackgroundShape.RECTANGLE
         var bgColor = Color.TRANSPARENT
         var enableRipple = false
-        var shouldCreateCustomBackground = true
-
+        var shouldCreateCustomBackground = true // Assume we'll create it
         if (this.background != null) {
             shouldCreateCustomBackground = false
         }
 
         attrs?.let { attributeSet ->
-            val typedArray = context.obtainStyledAttributes(
-                attributeSet,
-                R.styleable.FontIcon,
-                defStyleAttr,
-                0
-            )
+            val typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.FontIcon)
             try {
-                iconCode = typedArray.getString(R.styleable.FontIcon_setIcon)
-                customText = typedArray.getString(R.styleable.FontIcon_text)
-
-                textPosition = when (typedArray.getInt(R.styleable.FontIcon_textPosition, 1)) {
-                    0 -> TextPosition.TOP
-                    1 -> TextPosition.BOTTOM
-                    2 -> TextPosition.START
-                    3 -> TextPosition.END
-                    else -> TextPosition.BOTTOM
+                val iconCode = typedArray.getString(R.styleable.FontIcon_setIcon)
+                if (!iconCode.isNullOrEmpty()) {
+                    setIcon(iconCode)
                 }
 
                 val tintColor = typedArray.getColor(R.styleable.FontIcon_tint, currentTextColor)
@@ -77,18 +56,13 @@ class FontIcon @JvmOverloads constructor(
                         else -> BackgroundShape.RECTANGLE
                     }
 
-                    bgColor =
-                        typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
+                    bgColor = typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
                     enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
                 } else {
                     enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
-                    if (enableRipple && this.background != null && this.background !is RippleDrawable &&
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                    ) {
-                        val rippleColorStateList =
-                            ColorStateList.valueOf(Color.parseColor("#33000000"))
-                        this.background =
-                            RippleDrawable(rippleColorStateList, this.background, null)
+                    if (enableRipple && this.background != null && this.background !is RippleDrawable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        val rippleColorStateList = ColorStateList.valueOf(Color.parseColor("#33000000"))
+                        this.background = RippleDrawable(rippleColorStateList, this.background, null)
                     }
                 }
             } finally {
@@ -96,14 +70,12 @@ class FontIcon @JvmOverloads constructor(
             }
         }
 
+
         // Apply background with optional ripple
+        // OR if XML background was set, but we handled ripple above.
         if (shouldCreateCustomBackground) {
             background = createBackgroundDrawable(desiredShape, bgColor, enableRipple)
         }
-
-        // Set the compound drawable and text
-        updateContent()
-
         // Enable ripple effect
         isClickable = true
         isFocusable = true
@@ -111,55 +83,10 @@ class FontIcon @JvmOverloads constructor(
 
     fun setIcon(iconCode: String) {
         try {
-            this.iconCode = iconCode
-            updateContent()
+            val iconChar = String(Character.toChars(iconCode.toInt(16)))
+            text = iconChar
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    fun setTextPosition(position: TextPosition) {
-        this.textPosition = position
-        updateContent()
-    }
-
-    override fun setText(text: CharSequence?, type: BufferType?) {
-        this.customText = text?.toString()
-        updateContent()
-    }
-
-    private fun updateContent() {
-        val icon = iconCode?.let {
-            try {
-                String(Character.toChars(it.toInt(16)))
-            } catch (e: Exception) {
-                null
-            }
-        }
-
-        val text = customText ?: ""
-
-
-        when (textPosition) {
-            TextPosition.TOP -> {
-                super.setText(text + "\n" + icon, BufferType.NORMAL)
-                gravity = Gravity.CENTER
-            }
-
-            TextPosition.BOTTOM -> {
-                super.setText(icon + "\n" + text, BufferType.NORMAL)
-                gravity = Gravity.CENTER
-            }
-
-            TextPosition.START -> {
-                super.setText(text + " " + icon, BufferType.NORMAL)
-                gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            }
-
-            TextPosition.END -> {
-                super.setText(icon + " " + text, BufferType.NORMAL)
-                gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            }
         }
     }
 
@@ -178,10 +105,11 @@ class FontIcon @JvmOverloads constructor(
         }
 
         return if (ripple && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val rippleColor = ColorStateList.valueOf(Color.parseColor("#33000000"))
+            val rippleColor = ColorStateList.valueOf(Color.parseColor("#33000000")) // semi-transparent black
             RippleDrawable(rippleColor, shapeDrawable, null)
         } else {
             shapeDrawable
         }
     }
+
 }
