@@ -53,6 +53,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -288,7 +289,7 @@ object ViewExtensions {
     ) {
         setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                val editText = v as AppCompatEditText
+                val editText = v as AppCompatTextView
                 val compoundDrawables = editText.compoundDrawables
                 compoundDrawables.forEachIndexed { index, drawable ->
                     drawable?.let {
