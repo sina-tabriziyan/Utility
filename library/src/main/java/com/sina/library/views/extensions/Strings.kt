@@ -5,15 +5,20 @@
  */
 package com.sina.library.views.extensions
 
+import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.util.Base64
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.text.HtmlCompat
 import com.google.gson.internal.`$Gson$Preconditions`
 import org.jsoup.Jsoup
+import java.io.InputStream
 
 
 object StringExtension {
@@ -27,7 +32,9 @@ object StringExtension {
         return regex.find(this)?.groups?.get(1)?.value
     }
 
-    fun List<String>.findSidInHeaders(): String = this.find { it.startsWith("SID=") }?.substringBefore(";") ?: ""
+    fun List<String>.findSidInHeaders(): String =
+        this.find { it.startsWith("SID=") }?.substringBefore(";") ?: ""
+
     /** Extract latitude and longitude from a URL */
 
 
@@ -69,6 +76,7 @@ object StringExtension {
             Pair(getDouble("latitude"), getDouble("longitude"))
         } else null
     }
+
     fun Pair<Double, Double>?.toNavString(): String {
         return this?.let { "${it.first},${it.second}" } ?: ""
     }
@@ -84,6 +92,7 @@ object StringExtension {
             }
         } else null
     }
+
     fun String.extractLatLon1(): Pair<Double, Double>? {
         val latPattern = "mlat=([\\d.]+)".toRegex()
         val lonPattern = "mlon=([\\d.]+)".toRegex()
@@ -106,14 +115,17 @@ object StringExtension {
         val lon = "mlon=([\\d.]+)".toRegex().find(this)?.groupValues?.get(1)?.toDoubleOrNull()
         return if (lat != null && lon != null) lat to lon else null
     }
+
     fun String.extractMessageAndImage(): Pair<String?, String?> {
         val doc = Jsoup.parse(this)
         val message = doc.select("p").first()?.text()
         val imageSrc = doc.select("img").first()?.attr("src")
         return Pair(message, imageSrc)
     }
+
     fun String.extractId(): String {
-        val pattern = Regex("/chat/dialog/(attach|download)/\\d+/(\\d+)|/chat/dialog/(attach|download)/(\\d+)")
+        val pattern =
+            Regex("/chat/dialog/(attach|download)/\\d+/(\\d+)|/chat/dialog/(attach|download)/(\\d+)")
         val matchResult = pattern.find(this)
         return matchResult?.groups?.get(2)?.value ?: matchResult?.groups?.get(4)?.value ?: ""
     }
@@ -126,4 +138,12 @@ object StringExtension {
             getParcelableArrayList(key)
         }
     }
+
+    private fun convertUriToBase64(context: Context, uri: Uri): String {
+        val inputStream: InputStream? =context.contentResolver.openInputStream(uri)
+        return inputStream?.use {
+            Base64.encodeToString(it.readBytes(), Base64.DEFAULT)
+        } ?: ""
+    }
+
 }
