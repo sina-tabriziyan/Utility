@@ -45,12 +45,6 @@ private fun Fragment.buildNavOptions(
     }
     val navOptionsBuilder = NavOptions.Builder()
     when (backStack) {
-        BackStackOption.CLEAR_CURRENT -> {
-            navOptionsBuilder.setPopUpTo(
-                findNavController().currentDestination?.id ?: return null,
-                true
-            )
-        }
 
         BackStackOption.CLEAR_ALL -> {
             navOptionsBuilder.setPopUpTo(findNavController().graph.id, true)
