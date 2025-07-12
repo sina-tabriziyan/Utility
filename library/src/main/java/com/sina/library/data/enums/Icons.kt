@@ -14,5 +14,7 @@ enum class Icons constructor(var icon: String) {
     ICON_REPLY(icon = "f3b6"),
     ICON_PLAY(icon = "f2ce"),
     ICON_PAUSE(icon = "f3a6"),
-    ICON_FORWARD(icon = "f3b6")
+    ICON_FORWARD(icon = "f3b6"),
+    ICON_DELETE(icon = "f272"),
+    ICON_TICK(icon = "f284")
 }
