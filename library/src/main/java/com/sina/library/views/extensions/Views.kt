@@ -281,7 +281,7 @@ object ViewExtensions {
     }
 
 
-    fun View.setDrawableClickListener(
+    fun View.setDrawableClickListenerTextView(
         onDrawableStartClick: (() -> Unit)? = null,
         onDrawableTopClick: (() -> Unit)? = null,
         onDrawableEndClick: (() -> Unit)? = null,
@@ -290,6 +290,70 @@ object ViewExtensions {
         setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 val editText = v as AppCompatTextView
+                val compoundDrawables = editText.compoundDrawables
+                compoundDrawables.forEachIndexed { index, drawable ->
+                    drawable?.let {
+                        val bounds = it.bounds
+                        val x = event.x.toInt()
+                        val y = event.y.toInt()
+                        when (index) {
+                            0 -> { // DrawableStart
+                                if (x >= editText.paddingLeft && x <= editText.paddingLeft + bounds.width() &&
+                                    y >= editText.paddingTop && y <= editText.height - editText.paddingBottom
+                                ) {
+                                    onDrawableStartClick?.invoke()
+                                    editText.performClick() // Notify accessibility services
+                                    return@setOnTouchListener true
+                                }
+                            }
+
+                            1 -> { // DrawableTop
+                                if (x >= editText.paddingLeft && x <= editText.width - editText.paddingRight &&
+                                    y >= editText.paddingTop && y <= editText.paddingTop + bounds.height()
+                                ) {
+                                    onDrawableTopClick?.invoke()
+                                    editText.performClick()
+                                    return@setOnTouchListener true
+                                }
+                            }
+
+                            2 -> { // DrawableEnd
+                                if (x >= editText.width - editText.paddingRight - bounds.width() && x <= editText.width - editText.paddingRight &&
+                                    y >= editText.paddingTop && y <= editText.height - editText.paddingBottom
+                                ) {
+                                    onDrawableEndClick?.invoke()
+                                    editText.performClick()
+                                    return@setOnTouchListener true
+                                }
+                            }
+
+                            3 -> { // DrawableBottom
+                                if (x >= editText.paddingLeft && x <= editText.width - editText.paddingRight &&
+                                    y >= editText.height - editText.paddingBottom - bounds.height() && y <= editText.height - editText.paddingBottom
+                                ) {
+                                    onDrawableBottomClick?.invoke()
+                                    editText.performClick()
+                                    return@setOnTouchListener true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            false
+        }
+    }
+
+
+    fun View.setDrawableClickListenerEditText(
+        onDrawableStartClick: (() -> Unit)? = null,
+        onDrawableTopClick: (() -> Unit)? = null,
+        onDrawableEndClick: (() -> Unit)? = null,
+        onDrawableBottomClick: (() -> Unit)? = null
+    ) {
+        setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                val editText = v as AppCompatEditText
                 val compoundDrawables = editText.compoundDrawables
                 compoundDrawables.forEachIndexed { index, drawable ->
                     drawable?.let {
