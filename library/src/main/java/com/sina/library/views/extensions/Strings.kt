@@ -139,7 +139,7 @@ object StringExtension {
         }
     }
 
-    private fun convertUriToBase64(context: Context, uri: Uri): String {
+    fun convertUriToBase64(context: Context, uri: Uri): String {
         val inputStream: InputStream? =context.contentResolver.openInputStream(uri)
         return inputStream?.use {
             Base64.encodeToString(it.readBytes(), Base64.DEFAULT)
