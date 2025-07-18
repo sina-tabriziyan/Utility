@@ -25,7 +25,7 @@ import java.net.URL
 
 @SuppressLint("MissingPermission")
 
-class ConnectivityFlow(context: Context, private val urlProvider: () -> String) :
+class ConnectivityFlow(context: Context) :
     ConnectivityManager.NetworkCallback() {
 
     private val _isNetworkAvailable = MutableStateFlow(false)
@@ -84,7 +84,8 @@ class ConnectivityFlow(context: Context, private val urlProvider: () -> String) 
     private suspend fun checkInternetAccess(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val urlc = URL(urlProvider()).openConnection() as HttpURLConnection
+                val urlc =
+                    URL("https://erp.teamyar.com/public/home/login").openConnection() as HttpURLConnection
                 urlc.connectTimeout = 3000
                 urlc.connect()
                 val isConnected = urlc.responseCode == 200
