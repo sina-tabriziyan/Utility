@@ -24,7 +24,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 @SuppressLint("MissingPermission")
-class ConnectivityFlow(context: Context) : ConnectivityManager.NetworkCallback() {
+
+class ConnectivityFlow(context: Context, private val urlProvider: () -> String) :
+    ConnectivityManager.NetworkCallback() {
 
     private val _isNetworkAvailable = MutableStateFlow(false)
     val isNetworkAvailable: StateFlow<Boolean> = _isNetworkAvailable.asStateFlow()
@@ -32,14 +34,14 @@ class ConnectivityFlow(context: Context) : ConnectivityManager.NetworkCallback()
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    private var internetCheckJob: Job? = null // ✅ Prevent multiple coroutines running
+    private var internetCheckJob: Job? = null
 
     init {
         connectivityManager.registerDefaultNetworkCallback(this)
 
         CoroutineScope(Dispatchers.IO).launch {
             _isNetworkAvailable.value = checkInternetAccess()
-            startInternetCheck() // ✅ Start periodic checking only when network is available
+            startInternetCheck()
         }
     }
 
@@ -48,8 +50,7 @@ class ConnectivityFlow(context: Context) : ConnectivityManager.NetworkCallback()
             val isConnected = checkInternetAccess()
             _isNetworkAvailable.value = isConnected
             Log.d("ConnectivityFlow", "Network Available: $isConnected")
-
-            startInternetCheck() // ✅ Start periodic checks when network is available
+            startInternetCheck()
         }
     }
 
@@ -57,18 +58,16 @@ class ConnectivityFlow(context: Context) : ConnectivityManager.NetworkCallback()
         CoroutineScope(Dispatchers.IO).launch {
             _isNetworkAvailable.value = false
             Log.d("ConnectivityFlow", "Network Lost: false")
-
-            stopInternetCheck() // ✅ Stop checking when network is lost
+            stopInternetCheck()
         }
     }
 
-    /** ✅ Runs periodic internet check every 10 seconds **/
     private fun startInternetCheck() {
-        if (internetCheckJob?.isActive == true) return // ✅ Prevent multiple jobs running
+        if (internetCheckJob?.isActive == true) return
 
         internetCheckJob = CoroutineScope(Dispatchers.IO).launch {
             while (true) {
-                delay(10000) // ✅ Reduce frequency to avoid excessive CPU usage
+                delay(15_000) // every 15 seconds
                 val isConnected = checkInternetAccess()
                 if (_isNetworkAvailable.value != isConnected) {
                     _isNetworkAvailable.value = isConnected
@@ -78,25 +77,22 @@ class ConnectivityFlow(context: Context) : ConnectivityManager.NetworkCallback()
         }
     }
 
-    /** ✅ Stops periodic internet check when network is lost **/
     private fun stopInternetCheck() {
         internetCheckJob?.cancel()
     }
 
-    /** ✅ Securely Checks Internet Access Without Disabling SSL **/
     private suspend fun checkInternetAccess(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val urlc = URL("https://erp.teamyar.com/public/home/login").openConnection() as HttpURLConnection
-                urlc.connectTimeout = 3000 // ✅ Increased timeout for better reliability
+                val urlc = URL(urlProvider()).openConnection() as HttpURLConnection
+                urlc.connectTimeout = 3000
                 urlc.connect()
                 val isConnected = urlc.responseCode == 200
                 urlc.disconnect()
-
                 Log.d("ConnectivityFlow", "Internet Check Result: $isConnected")
                 isConnected
             } catch (e: IOException) {
-                Log.e("ConnectivityFlow", "Internet Check Failed: ${e.message}")
+                Log.e("ConnectivityFlow", "Internet Check Failed: \${e.message}")
                 false
             }
         }
