@@ -408,17 +408,30 @@ object ViewExtensions {
         }
     }
 
-    fun getStringResourceByName(context: Context, aString: String): String {
+    fun getStringResourceByName(context: Context, aString: String): String? {
         val resId = context.resources.getIdentifier(aString, "string", context.packageName)
-
-        // Check if resId is valid
         return if (resId != 0) {
             context.getString(resId)
         } else {
-            // Handle the case when the resource is not found, for example, return a default value or log an error
-            "Resource not found"
+            Log.e("ResourceLookup", "String resource not found: $aString")
+            null
         }
     }
+
+    fun getFontIconChar(context: Context, iconResName: String, fallback: String = "?"): String {
+        val fontIconHex = getStringResourceByName(context, iconResName)
+        return fontIconHex?.let {
+            try {
+                val codePoint = it.trim().toInt(16)
+                String(Character.toChars(codePoint))
+            } catch (e: NumberFormatException) {
+                Log.e("FontIcon", "Invalid font icon hex string: $it")
+                fallback
+            }
+        } ?: fallback
+    }
+
+
 
     /**
      * Extension function for EditText to listen for text changes and detect typing status.
