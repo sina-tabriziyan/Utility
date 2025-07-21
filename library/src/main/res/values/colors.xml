@@ -98,4 +98,16 @@
     <color name="notify_color_yellow">#f5d34c</color>
     <color name="status_bar_color">@color/colorPrimary</color>
 
+    <!-- Wave Colors -->
+    <color name="wave_start_color">#CC38BDF8</color> <!-- Light Blue (80% opacity) -->
+    <color name="wave_middle_color">#CC22C55E</color> <!-- Green (80% opacity) -->
+    <color name="wave_end_color">#CCF97316</color>   <!-- Orange (80% opacity) -->
+
+    <!-- Glass Effect Colors -->
+    <color name="glass_outline_color">#4DFFFFFF</color> <!-- 30% White -->
+    <color name="glass_reflection_color_strong">#66FFFFFF</color> <!-- 40% White -->
+    <color name="glass_reflection_color_weak">#33FFFFFF</color> <!-- 20% White -->
+
+    <!-- Text Color -->
+    <color name="progress_text_color">#E2E8F0</color> <!-- Light Gray -->
 </resources>

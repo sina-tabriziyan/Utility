@@ -51,4 +51,16 @@
         <attr name="textSize" format="dimension"/>
         <attr name="textColor" format="color"/>
     </declare-styleable>
+
+    <declare-styleable name="WaveProgressBar">
+        <attr name="progress" format="float" />
+        <attr name="waveStartColor" format="color" />
+        <attr name="waveMiddleColor" format="color" />
+        <attr name="waveEndColor" format="color" />
+        <attr name="glassOutlineColor" format="color" />
+        <attr name="glassReflectionColorStrong" format="color" />
+        <attr name="glassReflectionColorWeak" format="color" />
+        <attr name="textColor" format="color" />
+        <attr name="textSize" format="dimension" />
+    </declare-styleable>
 </resources>
