@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="otpTextColor" format="color" />
-    <attr name="otpTextSize" format="dimension" />
-    <attr name="waveTextColor" format="color" />
-    <attr name="waveTextSize" format="dimension" />
     <declare-styleable name="CircularCheckbox">
         <attr name="isChecked" format="boolean" />
         <attr name="circleColor" format="color" />
