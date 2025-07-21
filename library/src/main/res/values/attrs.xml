@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <attr name="otpTextColor" format="color" />
+    <attr name="otpTextSize" format="dimension" />
+    <attr name="waveTextColor" format="color" />
+    <attr name="waveTextSize" format="dimension" />
     <declare-styleable name="CircularCheckbox">
         <attr name="isChecked" format="boolean" />
         <attr name="circleColor" format="color" />
@@ -33,8 +37,8 @@
         <attr name="strokeWidth" format="dimension"/>
         <attr name="activeStrokeColor" format="color"/>
         <attr name="inactiveStrokeColor" format="color"/>
-        <attr name="textSize" format="dimension"/>
-        <attr name="textColor" format="color"/>
+        <attr name="otpTextSize" format="dimension"/>
+        <attr name="otpTextColor" format="color"/>
     </declare-styleable>
 
     <declare-styleable name="WaveProgressBar">
@@ -45,8 +49,8 @@
         <attr name="glassOutlineColor" format="color" />
         <attr name="glassReflectionColorStrong" format="color" />
         <attr name="glassReflectionColorWeak" format="color" />
-        <attr name="textColor" format="color" />
-        <attr name="textSize" format="dimension" />
+        <attr name="waveTextColor" format="color" />
+        <attr name="waveTextSize" format="dimension" />
     </declare-styleable>
 
 </resources>

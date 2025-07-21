@@ -96,8 +96,8 @@ class WaveProgressBar @JvmOverloads constructor(
             circleOutlinePaint.color = typedArray.getColor(R.styleable.WaveProgressBar_glassOutlineColor, circleOutlinePaint.color)
             reflectionPaintStrong.color = typedArray.getColor(R.styleable.WaveProgressBar_glassReflectionColorStrong, reflectionPaintStrong.color)
             reflectionPaintWeak.color = typedArray.getColor(R.styleable.WaveProgressBar_glassReflectionColorWeak, reflectionPaintWeak.color)
-            textPaint.color = typedArray.getColor(R.styleable.WaveProgressBar_textColor, textPaint.color)
-            textPaint.textSize = typedArray.getDimension(R.styleable.WaveProgressBar_textSize, textPaint.textSize)
+            textPaint.color = typedArray.getColor(R.styleable.WaveProgressBar_waveTextColor, textPaint.color)
+            textPaint.textSize = typedArray.getDimension(R.styleable.WaveProgressBar_waveTextSize, textPaint.textSize)
         } finally {
             typedArray.recycle() // Always recycle TypedArray
         }

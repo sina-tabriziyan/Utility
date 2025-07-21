@@ -10,9 +10,6 @@ import android.text.InputFilter
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.KeyEvent
-import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputConnection
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.doOnAttach
 import com.sina.library.utility.R
@@ -65,8 +62,8 @@ class OtpEditText @JvmOverloads constructor(
         strokeWidth = a.getDimension(R.styleable.OtpEditText_strokeWidth, 2f.dp())
         activeColor = a.getColor(R.styleable.OtpEditText_activeStrokeColor, Color.BLUE)
         inactiveColor = a.getColor(R.styleable.OtpEditText_inactiveStrokeColor, Color.GRAY)
-        val textSizePx = a.getDimension(R.styleable.OtpEditText_textSize, 24f.sp())
-        val textColor = a.getColor(R.styleable.OtpEditText_textColor, Color.BLACK)
+        val textSizePx = a.getDimension(R.styleable.OtpEditText_otpTextSize, 24f.sp())
+        val textColor = a.getColor(R.styleable.OtpEditText_otpTextColor, Color.BLACK)
         a.recycle()
 
         // Configure the backing EditText so it’s invisible
