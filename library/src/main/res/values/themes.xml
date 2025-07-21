@@ -41,5 +41,14 @@
         <item name="backgroundTint">@android:color/transparent</item>
         <item name="android:elevation">0dp</item>
     </style>
-
+    <declare-styleable name="OtpEditText">
+        <attr name="digits" format="integer"/>
+        <attr name="boxSize" format="dimension"/>
+        <attr name="boxSpacing" format="dimension"/>
+        <attr name="strokeWidth" format="dimension"/>
+        <attr name="activeStrokeColor" format="color"/>
+        <attr name="inactiveStrokeColor" format="color"/>
+        <attr name="textSize" format="dimension"/>
+        <attr name="textColor" format="color"/>
+    </declare-styleable>
 </resources>
