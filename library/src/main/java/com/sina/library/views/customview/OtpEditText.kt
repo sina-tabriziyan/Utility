@@ -99,6 +99,11 @@ class OtpEditText @JvmOverloads constructor(
             requestFocus()
             post { showSoftKeyboard() }
         }
+        setOnClickListener {
+            requestFocus()
+            showSoftKeyboard()
+        }
+
     }
 
     fun setOnOtpFilledListener(listener: (String) -> Unit) {

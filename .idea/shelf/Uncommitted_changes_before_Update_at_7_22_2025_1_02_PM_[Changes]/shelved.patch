@@ -1,0 +1,78 @@
+Index: library/src/main/java/com/sina/library/views/customview/OtpEditText.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.sina.library.views.customview\r\n\r\nimport android.content.Context\r\nimport android.graphics.Canvas\r\nimport android.graphics.Color\r\nimport android.graphics.Paint\r\nimport android.graphics.RectF\r\nimport android.text.Editable\r\nimport android.text.InputFilter\r\nimport android.text.TextWatcher\r\nimport android.util.AttributeSet\r\nimport android.view.KeyEvent\r\nimport android.view.View\r\nimport android.view.inputmethod.EditorInfo\r\nimport android.view.inputmethod.InputConnection\r\nimport androidx.appcompat.widget.AppCompatEditText\r\nimport androidx.core.view.doOnAttach\r\nimport com.sina.library.utility.R\r\n\r\n/**\r\n * A 5-digit OTP input rendered as 5 square boxes.\r\n *\r\n * Usage:\r\n * <com.example.otpview.OtpEditText\r\n *     android:id=\"@+id/otp\"\r\n *     android:layout_width=\"match_parent\"\r\n *     android:layout_height=\"wrap_content\"\r\n *     app:digits=\"5\"\r\n *     app:boxSize=\"48dp\"\r\n *     app:boxSpacing=\"8dp\"\r\n *     app:activeStrokeColor=\"@color/purple_500\"\r\n *     app:inactiveStrokeColor=\"@color/grey_400\"\r\n *     app:strokeWidth=\"2dp\"\r\n *     app:textSize=\"24sp\"\r\n *     app:textColor=\"@color/black\" />\r\n */\r\nclass OtpEditText @JvmOverloads constructor(\r\n    context: Context,\r\n    attrs: AttributeSet? = null,\r\n    defStyleAttr: Int = 0\r\n) : AppCompatEditText(context, attrs, defStyleAttr) {\r\n\r\n    private val digits: Int\r\n    private val boxSize: Float\r\n    private val boxSpacing: Float\r\n    private val strokeWidth: Float\r\n    private val activeColor: Int\r\n    private val inactiveColor: Int\r\n    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)\r\n    private val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG)\r\n    private val boxRect = RectF()\r\n\r\n    private var onOtpFilled: ((String) -> Unit)? = null\r\n\r\n    init {\r\n        val a = context.obtainStyledAttributes(\r\n            attrs,\r\n            R.styleable.OtpEditText,\r\n            defStyleAttr,\r\n            0\r\n        )\r\n        digits = a.getInt(R.styleable.OtpEditText_digits, 5)\r\n        boxSize = a.getDimension(R.styleable.OtpEditText_boxSize, 48f.dp())\r\n        boxSpacing = a.getDimension(R.styleable.OtpEditText_boxSpacing, 8f.dp())\r\n        strokeWidth = a.getDimension(R.styleable.OtpEditText_strokeWidth, 2f.dp())\r\n        activeColor = a.getColor(R.styleable.OtpEditText_activeStrokeColor, Color.BLUE)\r\n        inactiveColor = a.getColor(R.styleable.OtpEditText_inactiveStrokeColor, Color.GRAY)\r\n        val textSizePx = a.getDimension(R.styleable.OtpEditText_textSize, 24f.sp())\r\n        val textColor = a.getColor(R.styleable.OtpEditText_textColor, Color.BLACK)\r\n        a.recycle()\r\n\r\n        // Configure the backing EditText so it’s invisible\r\n        background = null\r\n        isCursorVisible = false\r\n        filters = arrayOf(InputFilter.LengthFilter(digits))\r\n        setTextColor(Color.TRANSPARENT)\r\n        setHintTextColor(Color.TRANSPARENT)\r\n        highlightColor = Color.TRANSPARENT\r\n        setTextIsSelectable(false)\r\n\r\n        // Paint for the digits\r\n        textPaint.textSize = textSizePx\r\n        textPaint.color = textColor\r\n        textPaint.textAlign = Paint.Align.CENTER\r\n\r\n        // Box paint (stroke only)\r\n        boxPaint.style = Paint.Style.STROKE\r\n        boxPaint.strokeWidth = strokeWidth\r\n\r\n        // Forward text changes\r\n        addTextChangedListener(object : TextWatcher {\r\n            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit\r\n            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit\r\n            override fun afterTextChanged(s: Editable?) {\r\n                if (s?.length == digits) onOtpFilled?.invoke(s.toString())\r\n                invalidate()\r\n            }\r\n        })\r\n\r\n        // When view is attached, request focus + show keyboard\r\n        doOnAttach {\r\n            requestFocus()\r\n            post { showSoftKeyboard() }\r\n        }\r\n    }\r\n\r\n    fun setOnOtpFilledListener(listener: (String) -> Unit) {\r\n        onOtpFilled = listener\r\n    }\r\n\r\n    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {\r\n        val w = paddingLeft + paddingRight +\r\n                (digits * boxSize + (digits - 1) * boxSpacing)\r\n        val h = paddingTop + paddingBottom + boxSize\r\n        setMeasuredDimension(w.toInt(), h.toInt())\r\n    }\r\n\r\n    override fun onDraw(canvas: Canvas) {\r\n        // Do NOT call super.onDraw – we draw everything ourselves\r\n        val text = text ?: return\r\n\r\n        for (i in 0 until digits) {\r\n            val left = paddingLeft + i * (boxSize + boxSpacing)\r\n            val top = paddingTop.toFloat()\r\n            boxRect.set(left, top, left + boxSize, top + boxSize)\r\n\r\n            // Border\r\n            boxPaint.color = if (i == text.length) activeColor else inactiveColor\r\n            canvas.drawRoundRect(boxRect, 8f.dp(), 8f.dp(), boxPaint)\r\n\r\n            // Character\r\n            if (i < text.length) {\r\n                val ch = text[i].toString()\r\n                val x = boxRect.centerX()\r\n                val y = boxRect.centerY() - (textPaint.descent() + textPaint.ascent()) / 2\r\n                canvas.drawText(ch, x, y, textPaint)\r\n            }\r\n        }\r\n    }\r\n\r\n    // Make sure the keyboard pops up\r\n    private fun showSoftKeyboard() {\r\n        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager\r\n        imm?.showSoftInput(this, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)\r\n    }\r\n\r\n    // Allow backspace to clear last digit\r\n    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {\r\n        if (keyCode == KeyEvent.KEYCODE_DEL && text?.isNotEmpty() == true) {\r\n            val newText = text?.dropLast(1)\r\n            setText(newText)\r\n            setSelection(newText?.length ?: 0)\r\n            return true\r\n        }\r\n        return super.onKeyDown(keyCode, event)\r\n    }\r\n\r\n    // Helper extensions\r\n    private fun Float.dp() = this * resources.displayMetrics.density\r\n    private fun Float.sp() = this * resources.displayMetrics.scaledDensity\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/library/src/main/java/com/sina/library/views/customview/OtpEditText.kt b/library/src/main/java/com/sina/library/views/customview/OtpEditText.kt
+--- a/library/src/main/java/com/sina/library/views/customview/OtpEditText.kt	(revision 2bb825f90178bd4dc801374fcd83041988587dd4)
++++ b/library/src/main/java/com/sina/library/views/customview/OtpEditText.kt	(date 1753099444872)
+@@ -102,6 +102,11 @@
+             requestFocus()
+             post { showSoftKeyboard() }
+         }
++        setOnClickListener {
++            requestFocus()
++            showSoftKeyboard()
++        }
++
+     }
+ 
+     fun setOnOtpFilledListener(listener: (String) -> Unit) {
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><project version=\"4\">\r\n  <component name=\"ExternalStorageConfigurationManager\" enabled=\"true\" />\r\n  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_21\" default=\"true\" project-jdk-name=\"jbr-21\" project-jdk-type=\"JavaSDK\" />\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision 2bb825f90178bd4dc801374fcd83041988587dd4)
++++ b/.idea/misc.xml	(date 1753107178773)
+@@ -1,4 +1,5 @@
++<?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ExternalStorageConfigurationManager" enabled="true" />
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK" />
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="jbr-17" project-jdk-type="JavaSDK" />
+ </project>
+\ No newline at end of file
+Index: .idea/compiler.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"CompilerConfiguration\">\r\n    <bytecodeTargetLevel target=\"21\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/compiler.xml b/.idea/compiler.xml
+--- a/.idea/compiler.xml	(revision 2bb825f90178bd4dc801374fcd83041988587dd4)
++++ b/.idea/compiler.xml	(date 1753107178784)
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="CompilerConfiguration">
+-    <bytecodeTargetLevel target="21" />
++    <bytecodeTargetLevel target="17" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"GradleMigrationSettings\" migrationVersion=\"1\" />\r\n  <component name=\"GradleSettings\">\r\n    <option name=\"linkedExternalProjectsSettings\">\r\n      <GradleProjectSettings>\r\n        <option name=\"testRunner\" value=\"CHOOSE_PER_TEST\" />\r\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\r\n        <option name=\"gradleJvm\" value=\"#GRADLE_LOCAL_JAVA_HOME\" />\r\n        <option name=\"modules\">\r\n          <set>\r\n            <option value=\"$PROJECT_DIR$\" />\r\n            <option value=\"$PROJECT_DIR$/app\" />\r\n            <option value=\"$PROJECT_DIR$/library\" />\r\n          </set>\r\n        </option>\r\n      </GradleProjectSettings>\r\n    </option>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+--- a/.idea/gradle.xml	(revision 2bb825f90178bd4dc801374fcd83041988587dd4)
++++ b/.idea/gradle.xml	(date 1753107178790)
+@@ -6,7 +6,7 @@
+       <GradleProjectSettings>
+         <option name="testRunner" value="CHOOSE_PER_TEST" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+-        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
++        <option name="gradleJvm" value="#JAVA_HOME" />
+         <option name="modules">
+           <set>
+             <option value="$PROJECT_DIR$" />
