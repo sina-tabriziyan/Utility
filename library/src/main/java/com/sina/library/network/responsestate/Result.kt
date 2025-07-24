@@ -30,3 +30,10 @@ suspend inline fun <D1, E1 : RootError, D2, E2 : RootError> Result<D1, E1>.flatM
         is Result.Error -> Result.Error(this.error)
     }
 }
+
+inline fun <D, E : RootError, R> Result<D, E>.map(transform: (D) -> R): Result<R, E> =
+    when (this) {
+        is Result.Success -> Result.Success(transform(data))
+        is Result.Error -> Result.Error(error)
+    }
+
