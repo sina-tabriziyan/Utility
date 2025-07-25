@@ -17,7 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 
 object AppPermissions {
-    // All permission groups from your original SimplePermissions
+    // All permission groups
     val AUDIO = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
         arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
     else arrayOf(
@@ -150,5 +150,11 @@ object AppPermissions {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    fun getDeniedPermissions(context: Context, permissions: Array<String>): List<String> {
+        return permissions.filter {
+            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+        }
     }
 }
