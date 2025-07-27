@@ -1,5 +1,10 @@
 package com.sina.library.network.responsestate
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withTimeoutOrNull
+import okhttp3.Dispatcher
 import retrofit2.Response
 import java.io.IOException
 
@@ -66,3 +71,20 @@ inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T,
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(this.data.body)
 }
+
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T, reified E : RootError> Result<ApiSuccess<T>, E>.asFlowResultBody(
+    timeoutMillis: Long = 5000L
+) = flow {
+    emit(
+        withTimeoutOrNull(timeoutMillis) {
+            this@asFlowResultBody.asResultBody()
+        } ?: Result.Error(
+            when (val e = DataError.Network.REQUEST_TIMEOUT) {
+                is E -> e
+                else -> throw IllegalStateException("Incompatible error type: Expected ${E::class}, got ${e::class}")
+            }
+        )
+    )
+}.flowOn(Dispatchers.IO)
