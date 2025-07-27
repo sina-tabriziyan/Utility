@@ -1,4 +1,21 @@
 <resources>
+        <string name="the_request_timed_out">The request timed out.</string>
+        <string name="youve_hit_your_rate_limit">You’ve hit your rate limit. Please try again later.</string>
+        <string name="no_internet">No internet connection.</string>
+        <string name="file_too_large">The file is too large.</string>
+        <string name="server_error">Server error. Please try again later.</string>
+        <string name="error_serialization">Data processing error.</string>
+        <string name="unknown_error">An unknown error occurred.</string>
+
+        <string name="error_disk_full">Your storage is full.</string>
+        <string name="error_file_not_found">The file was not found.</string>
+        <string name="error_invalid_path">The path is invalid.</string>
+        <string name="error_read_error">An error occurred while reading the file.</string>
+        <string name="error_write_error">An error occurred while writing the file.</string>
+        <string name="error_unsupported_format">Unsupported file format.</string>
+        <string name="error_cache_corrupted">Cache is corrupted.</string>
+        <string name="error_permission_denied">Permission denied.</string>
+
     <string-array name="month_name" translatable="false">
         <item>January</item>
         <item>February</item>

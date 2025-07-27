@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+        <string name="the_request_timed_out">درخواست زمان‌بر شد.</string>
+        <string name="youve_hit_your_rate_limit">محدودیت تعداد درخواست‌ها را رد کرده‌اید. لطفاً بعداً تلاش کنید.</string>
+        <string name="no_internet">اتصال اینترنت برقرار نیست.</string>
+        <string name="file_too_large">فایل بیش از حد بزرگ است.</string>
+        <string name="server_error">خطای سرور. لطفاً بعداً تلاش کنید.</string>
+        <string name="error_serialization">خطا در پردازش داده‌ها.</string>
+        <string name="unknown_error">خطای ناشناخته‌ای رخ داده است.</string>
+
+        <string name="error_disk_full">فضای ذخیره‌سازی پر است.</string>
+        <string name="error_file_not_found">فایل پیدا نشد.</string>
+        <string name="error_invalid_path">مسیر نامعتبر است.</string>
+        <string name="error_read_error">در هنگام خواندن فایل خطایی رخ داد.</string>
+        <string name="error_write_error">در هنگام نوشتن فایل خطایی رخ داد.</string>
+        <string name="error_unsupported_format">فرمت فایل پشتیبانی نمی‌شود.</string>
+        <string name="error_cache_corrupted">کش خراب شده است.</string>
+        <string name="error_permission_denied">دسترسی لازم وجود ندارد.</string>
+
     <string-array name="month_name" translatable="false">
         <item>فروردین</item>
         <item>اردیبهشت</item>
