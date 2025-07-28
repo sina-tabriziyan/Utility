@@ -36,6 +36,8 @@ class FontIcon @JvmOverloads constructor(
             shouldCreateCustomBackground = false
         }
 
+        var strokeColor = Color.TRANSPARENT
+        var strokeWidth = 0 // Default stroke width
         attrs?.let { attributeSet ->
             val typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.FontIcon)
             try {
@@ -65,6 +67,10 @@ class FontIcon @JvmOverloads constructor(
                         this.background = RippleDrawable(rippleColorStateList, this.background, null)
                     }
                 }
+                // Get stroke color and width
+                strokeColor = typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
+                strokeWidth = typedArray.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
+
             } finally {
                 typedArray.recycle()
             }
@@ -74,8 +80,7 @@ class FontIcon @JvmOverloads constructor(
         // Apply background with optional ripple
         // OR if XML background was set, but we handled ripple above.
         if (shouldCreateCustomBackground) {
-            background = createBackgroundDrawable(desiredShape, bgColor, enableRipple)
-        }
+            background = createBackgroundDrawable(desiredShape, bgColor, enableRipple, strokeColor, strokeWidth)        }
         // Enable ripple effect
         isClickable = true
         isFocusable = true
@@ -93,7 +98,9 @@ class FontIcon @JvmOverloads constructor(
     private fun createBackgroundDrawable(
         shape: BackgroundShape,
         color: Int,
-        ripple: Boolean
+        ripple: Boolean,
+        strokeColor: Int,
+        strokeWidth: Int
     ): Drawable {
         val shapeDrawable = GradientDrawable().apply {
             this.shape = when (shape) {
@@ -102,6 +109,10 @@ class FontIcon @JvmOverloads constructor(
             }
             cornerRadius = if (shape == BackgroundShape.ROUNDED) 16f else 0f
             setColor(color)
+            // Apply stroke if defined
+            if (strokeWidth > 0) {
+                setStroke(strokeWidth, strokeColor)
+            }
         }
 
         return if (ripple && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
