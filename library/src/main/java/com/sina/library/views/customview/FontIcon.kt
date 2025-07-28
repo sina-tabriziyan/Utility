@@ -92,6 +92,7 @@ class FontIcon @JvmOverloads constructor(
             text = iconChar
         } catch (e: Exception) {
             e.printStackTrace()
+
         }
     }
 
