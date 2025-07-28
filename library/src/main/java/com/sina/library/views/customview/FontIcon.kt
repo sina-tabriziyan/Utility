@@ -103,7 +103,6 @@ class FontIcon @JvmOverloads constructor(
                 strokeWidth
             )
         }
-        // Enable ripple effect
         isClickable = true
         isFocusable = true
     }
