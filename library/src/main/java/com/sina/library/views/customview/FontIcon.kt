@@ -9,6 +9,7 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.util.AttributeSet
+import android.view.Gravity
 import androidx.appcompat.widget.AppCompatTextView
 import com.sina.library.utility.R
 
@@ -58,18 +59,32 @@ class FontIcon @JvmOverloads constructor(
                         else -> BackgroundShape.RECTANGLE
                     }
 
-                    bgColor = typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
+                    bgColor =
+                        typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
                     enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
                 } else {
                     enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
                     if (enableRipple && this.background != null && this.background !is RippleDrawable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        val rippleColorStateList = ColorStateList.valueOf(Color.parseColor("#33000000"))
-                        this.background = RippleDrawable(rippleColorStateList, this.background, null)
+                        val rippleColorStateList =
+                            ColorStateList.valueOf(Color.parseColor("#33000000"))
+                        this.background =
+                            RippleDrawable(rippleColorStateList, this.background, null)
                     }
                 }
                 // Get stroke color and width
-                strokeColor = typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
+                strokeColor =
+                    typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
                 strokeWidth = typedArray.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
+                // Handle textPosition (if you plan to use it)
+                val textPositionValue = typedArray.getInt(R.styleable.FontIcon_textPosition, 0)
+                val iconPosition = when (textPositionValue) {
+                    0 -> Gravity.TOP
+                    1 -> Gravity.BOTTOM
+                    2 -> Gravity.START
+                    3 -> Gravity.END
+                    else -> Gravity.START
+                }
+                gravity = Gravity.CENTER or iconPosition
 
             } finally {
                 typedArray.recycle()
@@ -80,7 +95,14 @@ class FontIcon @JvmOverloads constructor(
         // Apply background with optional ripple
         // OR if XML background was set, but we handled ripple above.
         if (shouldCreateCustomBackground) {
-            background = createBackgroundDrawable(desiredShape, bgColor, enableRipple, strokeColor, strokeWidth)        }
+            background = createBackgroundDrawable(
+                desiredShape,
+                bgColor,
+                enableRipple,
+                strokeColor,
+                strokeWidth
+            )
+        }
         // Enable ripple effect
         isClickable = true
         isFocusable = true
@@ -110,14 +132,12 @@ class FontIcon @JvmOverloads constructor(
             }
             cornerRadius = if (shape == BackgroundShape.ROUNDED) 16f else 0f
             setColor(color)
-            // Apply stroke if defined
-            if (strokeWidth > 0) {
-                setStroke(strokeWidth, strokeColor)
-            }
+            if (strokeWidth > 0) setStroke(strokeWidth, strokeColor)
         }
 
         return if (ripple && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val rippleColor = ColorStateList.valueOf(Color.parseColor("#33000000")) // semi-transparent black
+            val rippleColor =
+                ColorStateList.valueOf(Color.parseColor("#33000000")) // semi-transparent black
             RippleDrawable(rippleColor, shapeDrawable, null)
         } else {
             shapeDrawable
