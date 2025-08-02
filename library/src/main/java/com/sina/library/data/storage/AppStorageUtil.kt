@@ -625,6 +625,75 @@ object AppStorageUtil {
             null
         }
     }
+    fun deleteTempFileByName(context: Context, fileType: TyFileType, fileName: String): Boolean {
+        // Define the base directory for the app's external files
+        val baseDir = context.getExternalFilesDir(null)
+
+        // Map the TyFileType to a specific directory
+        val directoryName = when (fileType) {
+            TyFileType.IMAGE -> "Teamyar/Teamyar Images"
+            TyFileType.VIDEO -> "Teamyar/Teamyar Videos"
+            TyFileType.AUDIO -> "Teamyar/Teamyar Audio"
+            TyFileType.MSEXCEL -> "Teamyar/Teamyar Documents/Excel"
+            TyFileType.MSPOWERPOINT -> "Teamyar/Teamyar Documents/PowerPoint"
+            TyFileType.MSWORD -> "Teamyar/Teamyar Documents/Word"
+            TyFileType.ACROBAT_PDF -> "Teamyar/Teamyar Documents/PDF"
+            TyFileType.TEXT -> "Teamyar/Teamyar Texts"
+            TyFileType.HTML -> "Teamyar/Teamyar HTML Files"
+            TyFileType.MP3 -> "Teamyar/Teamyar Audio/MP3"
+            TyFileType.FLV -> "Teamyar/Teamyar Videos/FLV"
+            TyFileType.EXECUTE -> "Teamyar/Teamyar Executables"
+            TyFileType.MINDMAP -> "Teamyar/Teamyar Mindmaps"
+            TyFileType.EDITING -> "Teamyar/Teamyar Editing Files"
+            TyFileType.SWF -> "Teamyar/Teamyar SWF Files"
+            TyFileType.CERT -> "Teamyar/Teamyar Certificates"
+            TyFileType.CHART -> "Teamyar/Teamyar Charts"
+            TyFileType.DIAGRAM -> "Teamyar/Teamyar Diagrams"
+            TyFileType.TIFF -> "Teamyar/Teamyar Images/TIFF"
+            TyFileType.RTF -> "Teamyar/Teamyar Texts/RTF"
+            TyFileType.XML -> "Teamyar/Teamyar Documents/XML"
+            TyFileType.CSV -> "Teamyar/Teamyar Documents/CSV"
+            TyFileType.MQ4 -> "Teamyar/Teamyar MQ Files/MQ4"
+            TyFileType.MQ5 -> "Teamyar/Teamyar MQ Files/MQ5"
+            TyFileType.MQ5EX -> "Teamyar/Teamyar MQ Files/MQ5EX"
+            TyFileType.MQH -> "Teamyar/Teamyar MQ Files/MQH"
+            TyFileType.CHM -> "Teamyar/Teamyar CHM Files"
+            TyFileType.ICO -> "Teamyar/Teamyar Icons"
+            TyFileType.CALENDAR -> "Teamyar/Teamyar Calendar Files"
+            TyFileType.TEAMYAR_TEXT -> "Teamyar/Teamyar Text Files/Teamyar"
+            TyFileType.VISIO -> "Teamyar/Teamyar Visio Files"
+            TyFileType.TEAMYAR_REPORT -> "Teamyar/Teamyar Reports"
+            TyFileType.SVG -> "Teamyar/Teamyar SVG Files"
+            TyFileType.TEAMYAR_SITE_TEXT -> "Teamyar/Teamyar Site Files"
+            else -> "Teamyar/Unknown"
+        }
+
+        // Get the full directory path
+        val specificDir = File(baseDir, directoryName)
+
+        // Create the directory if it doesn't exist
+        if (!specificDir.exists()) {
+            Log.e("deleteTempFileByName", "Directory does not exist: ${specificDir.absolutePath}")
+            return false
+        }
+
+        // Find the file to delete
+        val fileToDelete = File(specificDir, fileName)
+
+        return if (fileToDelete.exists()) {
+            // Attempt to delete the file
+            val deleted = fileToDelete.delete()
+            if (deleted) {
+                Log.i("deleteTempFileByName", "File deleted successfully: ${fileToDelete.absolutePath}")
+            } else {
+                Log.e("deleteTempFileByName", "Failed to delete file: ${fileToDelete.absolutePath}")
+            }
+            deleted
+        } else {
+            Log.e("deleteTempFileByName", "File does not exist: ${fileToDelete.absolutePath}")
+            false
+        }
+    }
 
 
     private val downloadProgressMap = HashMap<String, MutableLiveData<Int>>()
