@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Global attr -->
+    <attr name="strokeWidth" format="dimension" />
+
     <declare-styleable name="CircularCheckbox">
         <attr name="isChecked" format="boolean" />
         <attr name="circleColor" format="color" />
@@ -25,15 +28,14 @@
             <enum name="end" value="3"/>
         </attr>
         <attr name="strokeColor" format="color" />
-        <attr name="strokeWidth" format="integer" />
-
+        <attr name="strokeWidth" />
     </declare-styleable>
 
     <declare-styleable name="OtpEditText">
         <attr name="digits" format="integer"/>
         <attr name="boxSize" format="dimension"/>
         <attr name="boxSpacing" format="dimension"/>
-        <attr name="strokeWidth" format="dimension"/>
+        <attr name="strokeWidth"/>
         <attr name="activeStrokeColor" format="color"/>
         <attr name="inactiveStrokeColor" format="color"/>
         <attr name="otpTextSize" format="dimension"/>
@@ -51,5 +53,4 @@
         <attr name="waveTextColor" format="color" />
         <attr name="waveTextSize" format="dimension" />
     </declare-styleable>
-
 </resources>
