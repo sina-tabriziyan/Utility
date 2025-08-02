@@ -13,6 +13,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.MutableLiveData
 import com.sina.library.data.enums.FileType
 import com.sina.library.data.enums.MimeType
+import com.sina.library.data.enums.TyFileType
 import com.sina.library.utility.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -507,7 +508,6 @@ object AppStorageUtil {
         }
     }
 
-
     fun createTempFile(context: Context, fileType: FileType, customName: String? = null): File? {
         // Define the base directory for the app's external files
         val baseDir = context.getExternalFilesDir(null)
@@ -544,6 +544,84 @@ object AppStorageUtil {
         } catch (e: IOException) {
             // Log the exception if file creation fails
             Log.e("createTempFile", "Error creating temporary file: ${e.message}")
+            null
+        }
+    }
+
+    fun createTempFileFromTyFileType(context: Context, fileType: TyFileType, customName: String? = null): File? {
+        // Define the base directory for the app's external files
+        val baseDir = context.getExternalFilesDir(null)
+
+        // Map the TyFileType to a specific directory and extension
+        val (directoryName, fileExtension) = when (fileType) {
+            TyFileType.IMAGE -> "Teamyar/Teamyar Images" to ".jpg"
+            TyFileType.VIDEO -> "Teamyar/Teamyar Videos" to ".mp4"
+            TyFileType.AUDIO -> "Teamyar/Teamyar Audio" to ".mp3"
+            TyFileType.MSEXCEL -> "Teamyar/Teamyar Documents/Excel" to ".xls"
+            TyFileType.MSPOWERPOINT -> "Teamyar/Teamyar Documents/PowerPoint" to ".ppt"
+            TyFileType.MSWORD -> "Teamyar/Teamyar Documents/Word" to ".docx"
+            TyFileType.ACROBAT_PDF -> "Teamyar/Teamyar Documents/PDF" to ".pdf"
+            TyFileType.TEXT -> "Teamyar/Teamyar Texts" to ".txt"
+            TyFileType.HTML -> "Teamyar/Teamyar HTML Files" to ".html"
+            TyFileType.MP3 -> "Teamyar/Teamyar Audio/MP3" to ".mp3"
+            TyFileType.FLV -> "Teamyar/Teamyar Videos/FLV" to ".flv"
+            TyFileType.EXECUTE -> "Teamyar/Teamyar Executables" to ".exe"
+            TyFileType.MINDMAP -> "Teamyar/Teamyar Mindmaps" to ".mindmap"
+            TyFileType.EDITING -> "Teamyar/Teamyar Editing Files" to ".edit"
+            TyFileType.SWF -> "Teamyar/Teamyar SWF Files" to ".swf"
+            TyFileType.CERT -> "Teamyar/Teamyar Certificates" to ".cert"
+            TyFileType.CHART -> "Teamyar/Teamyar Charts" to ".chart"
+            TyFileType.DIAGRAM -> "Teamyar/Teamyar Diagrams" to ".diagram"
+            TyFileType.TIFF -> "Teamyar/Teamyar Images/TIFF" to ".tiff"
+            TyFileType.RTF -> "Teamyar/Teamyar Texts/RTF" to ".rtf"
+            TyFileType.XML -> "Teamyar/Teamyar Documents/XML" to ".xml"
+            TyFileType.CSV -> "Teamyar/Teamyar Documents/CSV" to ".csv"
+            TyFileType.MQ4 -> "Teamyar/Teamyar MQ Files/MQ4" to ".mq4"
+            TyFileType.MQ5 -> "Teamyar/Teamyar MQ Files/MQ5" to ".mq5"
+            TyFileType.MQ5EX -> "Teamyar/Teamyar MQ Files/MQ5EX" to ".mq5ex"
+            TyFileType.MQH -> "Teamyar/Teamyar MQ Files/MQH" to ".mqh"
+            TyFileType.CHM -> "Teamyar/Teamyar CHM Files" to ".chm"
+            TyFileType.ICO -> "Teamyar/Teamyar Icons" to ".ico"
+            TyFileType.CALENDAR -> "Teamyar/Teamyar Calendar Files" to ".calendar"
+            TyFileType.TEAMYAR_TEXT -> "Teamyar/Teamyar Text Files/Teamyar" to ".tytxt"
+            TyFileType.VISIO -> "Teamyar/Teamyar Visio Files" to ".vsd"
+            TyFileType.TEAMYAR_REPORT -> "Teamyar/Teamyar Reports" to ".tyreport"
+            TyFileType.SVG -> "Teamyar/Teamyar SVG Files" to ".svg"
+            TyFileType.TEAMYAR_SITE_TEXT -> "Teamyar/Teamyar Site Files" to ".tyshtm"
+            else -> "Teamyar/Unknown" to ".bin"  // Default case for unknown file types
+        }
+
+        // Define the specific directory for the given FileType
+        val specificDir = File(baseDir, directoryName)
+
+        // Create the directory if it doesn't exist
+        if (!specificDir.exists()) {
+            if (!specificDir.mkdirs()) {
+                // Log an error message if the directory creation fails
+                Log.e("createTempFileFromTyFileType", "Failed to create directory: ${specificDir.absolutePath}")
+                return null
+            }
+        }
+
+        // Determine the file name
+        val fileName = customName ?: run {
+            // Create a timestamp to ensure unique file names
+            val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            "TEMP_$timeStamp$fileExtension"
+        }
+
+        // Create the temporary file
+        val tempFile = File(specificDir, fileName)
+        return try {
+            if (tempFile.createNewFile()) {
+                tempFile
+            } else {
+                Log.e("createTempFileFromTyFileType", "File already exists: ${tempFile.absolutePath}")
+                null
+            }
+        } catch (e: IOException) {
+            // Log the exception if file creation fails
+            Log.e("createTempFileFromTyFileType", "Error creating temporary file: ${e.message}")
             null
         }
     }
