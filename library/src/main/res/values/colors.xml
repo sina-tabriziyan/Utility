@@ -110,4 +110,16 @@
 
     <!-- Text Color -->
     <color name="progress_text_color">#E2E8F0</color> <!-- Light Gray -->
+
+    <color name="ty_icon_image">#4CAF50</color>
+    <color name="ty_icon_video">#03A9F4</color>
+    <color name="ty_icon_audio">#FF9800</color>
+    <color name="ty_icon_pdf">#F44336</color>
+    <color name="ty_icon_word">#3F51B5</color>
+    <color name="ty_icon_excel">#2E7D32</color>
+    <color name="ty_icon_text">#607D8B</color>
+    <color name="ty_icon_archive">#9C27B0</color>
+    <color name="ty_icon_default">#757575</color>
+    <color name="ty_icon_disabled">#BDBDBD</color>
+
 </resources>
