@@ -734,16 +734,14 @@ object AppStorageUtil {
             TyFileType.TEAMYAR_SITE_TEXT -> File(baseDir, "Teamyar/Teamyar Site Files")
             else -> File(baseDir, "Teamyar/Unknown")
         }
-
         if (fileType == TyFileType.TEXT) {
             val file = File(specificDir, fileName)
             if (file.exists()) return true
 
-            val nameWithoutExt = fileName.substringBeforeLast('.', fileName)
-            val txt = File(specificDir, "$nameWithoutExt.txt")
-            val log = File(specificDir, "$nameWithoutExt.log")
-
-            return txt.exists() || log.exists()
+            // NEW: handle .log <-> .txt fallback
+            val baseName = fileName.substringBeforeLast('.', fileName)
+            val altExtensions = listOf(".log", ".txt")
+            return altExtensions.any { ext -> File(specificDir, "$baseName$ext").exists() }
         }
 
         val targetFile = File(specificDir, fileName)
