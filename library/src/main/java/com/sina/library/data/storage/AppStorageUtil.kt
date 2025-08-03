@@ -696,6 +696,7 @@ object AppStorageUtil {
     }
     fun isFileInStorage(context: Context, fileName: String, fileType: TyFileType): Boolean {
         val baseDir = context.getExternalFilesDir(null)
+
         val specificDir = when (fileType) {
             TyFileType.IMAGE -> File(baseDir, "Teamyar/Teamyar Images")
             TyFileType.VIDEO -> File(baseDir, "Teamyar/Teamyar Videos")
@@ -733,8 +734,24 @@ object AppStorageUtil {
             TyFileType.TEAMYAR_SITE_TEXT -> File(baseDir, "Teamyar/Teamyar Site Files")
             else -> File(baseDir, "Teamyar/Unknown")
         }
-        return File(specificDir, fileName).exists()
+
+        if (fileType == TyFileType.TEXT) {
+            val file = File(specificDir, fileName)
+            if (file.exists()) return true
+
+            val nameWithoutExt = fileName.substringBeforeLast('.', fileName)
+            val txt = File(specificDir, "$nameWithoutExt.txt")
+            val log = File(specificDir, "$nameWithoutExt.log")
+
+            return txt.exists() || log.exists()
+        }
+
+        val targetFile = File(specificDir, fileName)
+        val result = targetFile.exists()
+        Log.e("CheckFile", "Check $fileName exists=$result at ${targetFile.absolutePath}")
+        return result
     }
+
 
 
     private val downloadProgressMap = HashMap<String, MutableLiveData<Int>>()
