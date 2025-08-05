@@ -788,8 +788,28 @@ object AppStorageUtil {
             else -> File(baseDir, "Teamyar/Unknown")
         }
 
-        // همان مسیر کامل فایل
-        return File(specificDir, fileName)
+        if (fileType == TyFileType.TEXT) {
+            val originalFile = File(specificDir, fileName)
+            if (originalFile.exists()) {
+                return originalFile
+            }
+
+            val baseName = fileName.substringBeforeLast('.', fileName)
+            val altExtensions = listOf(".txt", ".log")
+            val found = altExtensions.firstOrNull { ext ->
+                File(specificDir, "$baseName$ext").exists()
+            }
+
+            if (found != null) {
+                val fallbackFile = File(specificDir, "$baseName$found")
+                Log.e("FilePathResolver", "Fallback path resolved: ${fallbackFile.absolutePath}")
+                return fallbackFile
+            }
+        }
+
+        val finalPath = File(specificDir, fileName)
+        Log.e("FilePathResolver", "Default path resolved: ${finalPath.absolutePath}")
+        return finalPath
     }
 
 
