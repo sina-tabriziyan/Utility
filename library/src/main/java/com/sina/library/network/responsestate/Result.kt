@@ -72,7 +72,14 @@ inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T,
     is Result.Success -> Result.Success(this.data.body)
 }
 
-
+/**
+ * Transforms a Result of ApiSuccess into a Result containing a Pair of the body and HTTP code,
+ * or propagates the error.
+ */
+inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBodyWithCode(): Result<Pair<T, Int>, E> = when (this) {
+    is Result.Error -> Result.Error(this.error)
+    is Result.Success -> Result.Success(Pair(this.data.body, this.data.code))
+}
 @Suppress("UNCHECKED_CAST")
 inline fun <T, reified E : RootError> Result<ApiSuccess<T>, E>.asFlowResultBody(
     timeoutMillis: Long = 5000L
