@@ -68,7 +68,7 @@ suspend inline fun <reified T> safeCall(
     }
 }
 
-inline fun <T, E : RootError> Result<ApiSuccess<T?>, E>.asResultBody(): Result<T?, E> = when (this) {
+inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T?, E> = when (this) {
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(this.data.body)
 }
@@ -84,8 +84,7 @@ inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asFullResponse(): Result<
     )
 }
 
-inline fun <T, E : RootError>
-        Result<ApiSuccess<T?>, E>.requireBody(orElse: () -> E): Result<T, E> = when (this) {
+inline fun <T, E : RootError> Result<ApiSuccess<T?>, E>.requireBody(orElse: () -> E): Result<T, E> = when (this) {
     is Result.Error   -> Result.Error(error)
     is Result.Success -> data.body?.let { Result.Success(it) } ?: Result.Error(orElse())
 }
