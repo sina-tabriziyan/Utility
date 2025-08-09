@@ -72,6 +72,22 @@ inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T,
     is Result.Success -> Result.Success(this.data.body)
 }
 
+
+/**
+ * Transforms a Result of ApiSuccess into a Result containing the body, HTTP code, and headers,
+ * or propagates the error.
+ */
+inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asFullResponse(): Result<FullApiResponse<T>, E> = when (this) {
+    is Result.Error -> Result.Error(this.error)
+    is Result.Success -> Result.Success(
+        FullApiResponse(
+            body = this.data.body,
+            code = this.data.code,
+            headers = this.data.headers
+        )
+    )
+}
+
 /**
  * Transforms a Result of ApiSuccess into a Result containing a Pair of the body and HTTP code,
  * or propagates the error.

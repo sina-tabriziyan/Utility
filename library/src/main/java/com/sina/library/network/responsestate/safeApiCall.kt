@@ -15,7 +15,13 @@ suspend inline fun <reified T> safeApiCall(
 
         if (code in successCodes) {
             if (body != null) {
-                Result.Success(ApiSuccess(code, body))
+                Result.Success(
+                    ApiSuccess(
+                        code = code,
+                        body = body,
+                        headers = response.headers()
+                    )
+                )
             } else {
                 Result.Error(DataError.Network.SERIALIZATION)
             }
@@ -52,7 +58,13 @@ suspend inline fun <reified T> safeApiCall(
 
         if (code in successCodes) {
             if (body != null || !treatEmptyBodyAsError) {
-                Result.Success(ApiSuccess(code, body as T)) // safe cast: body could be null if allowed
+                Result.Success(
+                    ApiSuccess(
+                        code,
+                        body as T,
+                        headers = response.headers()
+                    )
+                ) // safe cast: body could be null if allowed
             } else {
                 Result.Error(DataError.Network.SERIALIZATION)
             }
