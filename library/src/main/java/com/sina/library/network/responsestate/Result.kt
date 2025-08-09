@@ -1,5 +1,6 @@
 package com.sina.library.network.responsestate
 
+import com.sina.library.network.responsestate.asResultBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -67,16 +68,11 @@ suspend inline fun <reified T> safeCall(
     }
 }
 
-inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T, E> = when (this) {
+inline fun <T, E : RootError> Result<ApiSuccess<T?>, E>.asResultBody(): Result<T?, E> = when (this) {
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(this.data.body)
 }
 
-
-/**
- * Transforms a Result of ApiSuccess into a Result containing the body, HTTP code, and headers,
- * or propagates the error.
- */
 inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asFullResponse(): Result<FullApiResponse<T>, E> = when (this) {
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(
@@ -88,26 +84,22 @@ inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asFullResponse(): Result<
     )
 }
 
-/**
- * Transforms a Result of ApiSuccess into a Result containing a Pair of the body and HTTP code,
- * or propagates the error.
- */
-inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBodyWithCode(): Result<Pair<T, Int>, E> = when (this) {
+inline fun <T, E : RootError>
+        Result<ApiSuccess<T?>, E>.requireBody(orElse: () -> E): Result<T, E> = when (this) {
+    is Result.Error   -> Result.Error(error)
+    is Result.Success -> data.body?.let { Result.Success(it) } ?: Result.Error(orElse())
+}
+
+inline fun <T, E : RootError> Result<ApiSuccess<T?>, E>.asResultBodyWithCode(): Result<Pair<T?, Int>, E> = when (this) {
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(Pair(this.data.body, this.data.code))
 }
-@Suppress("UNCHECKED_CAST")
-inline fun <T, reified E : RootError> Result<ApiSuccess<T>, E>.asFlowResultBody(
-    timeoutMillis: Long = 5000L
+
+inline fun <T, E : RootError> Result<ApiSuccess<T?>, E>.asFlowResultBody(
+    timeoutMillis: Long = 5000L,
+    crossinline onTimeout: () -> E
 ) = flow {
-    emit(
-        withTimeoutOrNull(timeoutMillis) {
-            this@asFlowResultBody.asResultBody()
-        } ?: Result.Error(
-            when (val e = DataError.Network.REQUEST_TIMEOUT) {
-                is E -> e
-                else -> throw IllegalStateException("Incompatible error type: Expected ${E::class}, got ${e::class}")
-            }
-        )
-    )
+    emit( withTimeoutOrNull(timeoutMillis) {
+        this@asFlowResultBody.asResultBody() // Result<T?, E>
+    } ?: Result.Error(onTimeout()))
 }.flowOn(Dispatchers.IO)

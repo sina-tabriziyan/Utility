@@ -17,21 +17,21 @@ suspend inline fun <reified T> safeApiCall(
         Log.e("TAG", "safeApiCall code: $code", )
         if (code in successCodes) {
             return when{
-                code in 300..302->            Result.Success(
+                code in 300..302->Result.Success(
                     ApiSuccess(
                         code = code,
                         body = body,
                         headers = response.headers()
                     )
                 )
-                body != null->            Result.Success(
+                body != null ->Result.Success(
                     ApiSuccess(
                         code = code,
                         body = body,
                         headers = response.headers()
                     )
                 )
-                else-> Result.Error(DataError.Network.SERIALIZATION)
+                else->Result.Error(DataError.Network.SERIALIZATION)
             }
 
         } else {
