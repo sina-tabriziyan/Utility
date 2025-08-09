@@ -1,8 +1,10 @@
 package com.sina.library.network.responsestate
 
+import android.util.Log
 import com.google.gson.JsonParseException
 import retrofit2.Response
 import java.io.IOException
+
 
 suspend inline fun <reified T> safeApiCall(
     crossinline apiCall: suspend () -> Response<T>,
@@ -12,19 +14,26 @@ suspend inline fun <reified T> safeApiCall(
         val response = apiCall()
         val code = response.code()
         val body = response.body()
-
+        Log.e("TAG", "safeApiCall code: $code", )
         if (code in successCodes) {
-            if (body != null) {
-                Result.Success(
+            return when{
+                code in 300..302->            Result.Success(
                     ApiSuccess(
                         code = code,
                         body = body,
                         headers = response.headers()
                     )
                 )
-            } else {
-                Result.Error(DataError.Network.SERIALIZATION)
+                body != null->            Result.Success(
+                    ApiSuccess(
+                        code = code,
+                        body = body,
+                        headers = response.headers()
+                    )
+                )
+                else-> Result.Error(DataError.Network.SERIALIZATION)
             }
+
         } else {
             val error = when (code) {
                 408 -> DataError.Network.REQUEST_TIMEOUT
