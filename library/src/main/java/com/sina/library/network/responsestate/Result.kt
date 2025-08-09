@@ -68,7 +68,7 @@ suspend inline fun <reified T> safeCall(
     }
 }
 
-inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T?, E> = when (this) {
+inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T, E> = when (this) {
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(this.data.body)
 }
