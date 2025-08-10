@@ -11,6 +11,6 @@ data class ApiSuccess<T>(
 
 data class FullApiResponse<T>(
     val code: Int,
-    val body: T?=null,
+    val body: T? = null,
     val headers: Headers
 )
