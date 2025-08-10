@@ -90,6 +90,12 @@ inline fun <T : Any, E : RootError> Result<ApiSuccess<T?>, E>.asResultBodyOrRedi
     }
 }
 
+inline fun <T, E : RootError> Result<FullApiResponse<T>, E>.asFullResultBody(): Result<T?, E> =
+    when (this) {
+        is Result.Error -> Result.Error(error)
+        is Result.Success-> Result.Success(data.body)
+    }
+
 
 inline fun <T : Any, E : RootError> Result<ApiSuccess<T?>, E>.asResultBodyOr(
     crossinline orElse: (ApiSuccess<T?>) -> T
