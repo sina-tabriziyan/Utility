@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Dispatcher
+import okhttp3.Headers
 import retrofit2.Response
 import java.io.IOException
 
@@ -72,6 +73,35 @@ inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asResultBody(): Result<T,
     is Result.Error -> Result.Error(this.error)
     is Result.Success -> Result.Success(this.data.body)
 }
+
+inline fun <T : Any, E : RootError> Result<ApiSuccess<T?>, E>.asResultBodyOrRedirect(
+    crossinline onRedirect: (code: Int, headers: Headers) -> T,
+    crossinline onNullBody: (ApiSuccess<T?>) -> E = { _ -> error("Null body on non-302; map to an error you prefer") }
+): Result<T, E> = when (this) {
+    is Result.Error -> Result.Error(error)
+    is Result.Success -> {
+        val s = data
+        when {
+            s.body != null -> Result.Success(s.body)
+            s.code == 302  -> Result.Success(onRedirect(s.code, s.headers))
+            else           -> Result.Error(onNullBody(s))
+        }
+    }
+}
+
+
+inline fun <T : Any, E : RootError> Result<ApiSuccess<T?>, E>.asResultBodyOr(
+    crossinline orElse: (ApiSuccess<T?>) -> T
+): Result<T, E> = when (this) {
+    is Result.Error -> Result.Error(error)
+    is Result.Success -> {
+        val s = data
+        val body = s.body
+        if (body != null) Result.Success(body)
+        else Result.Success(orElse(s))
+    }
+}
+
 
 inline fun <T, E : RootError> Result<ApiSuccess<T>, E>.asFullResponse(): Result<FullApiResponse<T>, E> = when (this) {
     is Result.Error -> Result.Error(this.error)

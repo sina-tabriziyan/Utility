@@ -8,8 +8,9 @@ data class ApiSuccess<T>(
     val headers: Headers
 )
 
+
 data class FullApiResponse<T>(
     val code: Int,
-    val body: T,
+    val body: T?=null,
     val headers: Headers
 )
