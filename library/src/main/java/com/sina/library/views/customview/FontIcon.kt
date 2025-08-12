@@ -82,7 +82,7 @@ class FontIcon @JvmOverloads constructor(
                     1 -> Gravity.BOTTOM
                     2 -> Gravity.START
                     3 -> Gravity.END
-                    else -> Gravity.START
+                    else -> Gravity.CENTER
                 }
                 gravity = Gravity.CENTER or iconPosition
 
