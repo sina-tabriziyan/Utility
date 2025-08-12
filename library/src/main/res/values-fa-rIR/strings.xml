@@ -48,7 +48,7 @@
     <string name="chat_edit_group_name">نام گروه را وارد کنید…</string>
     <string name="chat_edit_group_description">شما می‌توانید پیام ارسال کنید، همزمان به چت بازگردید و پیام خود را ارسال کنید</string>
     <string name="chat_edit_group_cant_leave">شما نمی‌توانید چتی را که ایجاد کرده‌اید ترک کنید</string>
-    <string name="chat_new_group_chat">چت گروهی</string>
+    <string name="chat_new_group_chat">گفتگوی گروهی</string>
     <string name="chat_new_contacts">مخاطبین</string>
     <string name="chat_new_conversation">مکالمه جدید اضافه شد</string>
     <string name="chat_message_deleted">پیام حذف شد</string>
@@ -142,8 +142,8 @@
     <!-- Navigation -->
     <string name="nav_open">باز کردن</string>
     <string name="nav_home">خانه</string>
-    <string name="nav_chat_new">چت جدید</string>
-    <string name="nav_chat">چت</string>
+    <string name="nav_chat_new">گفتگوی جدید</string>
+    <string name="nav_chat">گفتگو</string>
     <string name="nav_close">بستن</string>
     <string name="nav_privacy">حریم خصوصی</string>
     <string name="nav_feedback">بازخورد</string>
@@ -471,7 +471,7 @@
     <string name="sending_file">در حال ارسال فایل</string>
     <string name="all_files_deleted">تمامی فایل ها با موفقیت حذف شد.</string>
     <string name="NOTIFY_STATUS_WARNING">هشدار</string>
-    <string name="submit">Submit</string>
+    <string name="submit">ارسال</string>
     <string name="insert_domain">لطفا فیلد دامنه را پر نمایید.</string>
     <string name="NOTIFY_STATUS_REJECT">رد</string>
     <string name="cannot_off_gps">شما نمی توانید GPS خود را خاموش کنید.</string>
@@ -486,8 +486,8 @@
     <string name="select_printer">انتخاب چاپگر</string>
     <string name="type_of_printer">اتصال از طریق</string>
     <string name="usb_printer">کابل usb</string>
-    <string name="bluetooth_printer">bluetooth</string>
-    <string name="wifi_printer">از طریق wifi</string>
+    <string name="bluetooth_printer">بلوتوث</string>
+    <string name="wifi_printer">از طریق وایفای</string>
     <string name="laser_printer">چاپگر لیزری</string>
     <string name="thermal_printer">چاپگر حرارتی</string>
     <string name="other_printer">چاپگر معمولی</string>
@@ -633,23 +633,24 @@
     <string name="privacy_title">گزارش مشکل</string>
     <string name="txt_nothing_happened">خبری نیست</string>
     <string name="chat_edit_add_admin">افزودن ادمین</string>
-    <string name="cant_access_to_the_address">Cant access to the %1$s</string>
-    <string name="search_hint">Search here...</string>
-    <string name="txt_recording">Recording</string>
-    <string name="txt_playing">Audio Playing</string>
-    <string name="error_time_out">Network is unavailable or check timed out</string>
-    <string name="error_fetch_data">Failed to fetch data</string>
-    <string name="error_unable_to_resolve">Unable to reolve</string>
-    <string name="error_user_data_null">User data null</string>
-    <string name="error_during_login">Error during login</string>
-    <string name="txt_printer">Printer</string>
-    <string name="choose_printer">Choose Printer</string>
+    <string name="cant_access_to_the_address">امکان دسترسی به %1$s وجود ندارد</string>
+    <string name="search_hint">اینجا جستجو کنید...</string>
+    <string name="txt_recording">در حال ضبط</string>
+    <string name="txt_playing">در حال پخش صدا</string>
+    <string name="error_time_out">شبکه در دسترس نیست یا زمان درخواست به پایان رسیده است</string>
+    <string name="error_fetch_data">دریافت داده با خطا مواجه شد</string>
+    <string name="error_unable_to_resolve">امکان شناسایی یا برقراری ارتباط وجود ندارد</string>
+
+    <string name="error_user_data_null">ورودی نا متعبر</string>
+    <string name="error_during_login">مشکلی در ورود پیش آمده</string>
+    <string name="txt_printer">پرینتر</string>
+    <string name="choose_printer">انتخاب پرینتر</string>
     <string name="usb">یو اس بی</string>
     <string name="nav_file_manager">مدیریت فایل</string>
-    <string name="chat_private">Private</string>
-    <string name="chat_group">Group</string>
-    <string name="chat_channel">Channel</string>
-    <string name="chat_archive">Archive</string>
+    <string name="chat_private">خصوصی</string>
+    <string name="chat_group">گروه</string>
+    <string name="chat_channel">کانال</string>
+    <string name="chat_archive">بایگانی</string>
 
 
 </resources>
