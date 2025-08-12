@@ -77,14 +77,14 @@ class FontIcon @JvmOverloads constructor(
                 strokeWidth = typedArray.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
                 // Handle textPosition (if you plan to use it)
                 val textPositionValue = typedArray.getInt(R.styleable.FontIcon_textPosition, 0)
-                val iconPosition = when (textPositionValue) {
-                    0 -> Gravity.TOP
-                    1 -> Gravity.BOTTOM
-                    2 -> Gravity.START
-                    3 -> Gravity.END
-                    else -> Gravity.CENTER
-                }
-                gravity = Gravity.CENTER or iconPosition
+//                val iconPosition = when (textPositionValue) {
+//                    0 -> Gravity.TOP
+//                    1 -> Gravity.BOTTOM
+//                    2 -> Gravity.START
+//                    3 -> Gravity.END
+//                    else -> Gravity.CENTER
+//                }
+                gravity = Gravity.CENTER
 
             } finally {
                 typedArray.recycle()
