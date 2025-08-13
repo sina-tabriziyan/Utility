@@ -60,6 +60,33 @@ class FontIcon @JvmOverloads constructor(
         // optional: keep compatibility with your old setter
         setSurroundingIcons(items.map { it.hex })
     }
+
+    // inside class FontIcon : AppCompatTextView { ... }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        // While the radial menu is visible, forward MOVE/UP to the overlay
+        if (showingOverlay && overlay != null) {
+            val screen = IntArray(2)
+            overlay!!.getLocationOnScreen(screen)
+
+            // convert this event to overlay coordinates
+            val xInOverlay = event.rawX - screen[0]
+            val yInOverlay = event.rawY - screen[1]
+
+            val forwarded = MotionEvent.obtain(event)
+            forwarded.offsetLocation(xInOverlay - event.x, yInOverlay - event.y)
+
+            overlay!!.dispatchTouchEvent(forwarded)
+            forwarded.recycle()
+
+            // consume so the movable touch listener can’t move the button
+            return true
+        }
+
+        // normal path (allows click/long-press when overlay is NOT showing)
+        return super.onTouchEvent(event)
+    }
+
     init {
         // Load the custom font
         typeface = Typeface.createFromAsset(context.assets, "fonticons.ttf")
@@ -133,7 +160,7 @@ class FontIcon @JvmOverloads constructor(
         }
         setOnClickListener {
             if (showingOverlay) {
-                hideRadialOverlay()
+                hideInteractiveOverlay()
             } else {
                 externalClick?.invoke(this)
             }
@@ -142,14 +169,21 @@ class FontIcon @JvmOverloads constructor(
     }
     private fun showInteractiveOverlay() {
         val parent = parent as? ViewGroup ?: return
+        // NEW: tell Fragment to disable movability
+        onPreviewShown?.invoke()
+
         if (overlay == null) {
-            overlay = RadialIconsOverlay(context)
-            overlay!!.layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
+            overlay = RadialIconsOverlay(context).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
             parent.addView(overlay)
-        }
+        }else
+            (overlay?.parent as? ViewGroup)?.bringChildToFront(overlay) // ← add this
+
+        parent.requestDisallowInterceptTouchEvent(true)
 
         overlay?.showInteractive(
             anchor = this,
@@ -158,19 +192,25 @@ class FontIcon @JvmOverloads constructor(
             itemSizePx = dp(overlayItemSizeDp),
             duration = overlayAnimDuration,
             interpolator = overlayInterpolator,
-            onFinished = { showingOverlay = false }
+            onFinished = {
+                // NEW: re-enable movability after dismiss
+                (parent as? ViewGroup)?.requestDisallowInterceptTouchEvent(false)
+                onPreviewHidden?.invoke()
+                showingOverlay = false
+            }
         )
         showingOverlay = true
-        parent.requestDisallowInterceptTouchEvent(true)
     }
 
 
     private fun hideInteractiveOverlay() {
         overlay?.hideIcons(anchor = this, duration = overlayAnimDuration) {
             (parent as? ViewGroup)?.requestDisallowInterceptTouchEvent(false)
+            onPreviewHidden?.invoke()    // <— re-enable movability
             showingOverlay = false
         }
     }
+
 
     fun setIcon(iconCode: String) {
         try {
@@ -301,7 +341,8 @@ class FontIcon @JvmOverloads constructor(
             highlighted = -1
 
             // anchor center
-            val a = IntArray(2); val o = IntArray(2)
+            val a = IntArray(2)
+            val o = IntArray(2)
             anchor.getLocationOnScreen(a); getLocationOnScreen(o)
             centerX = (a[0] - o[0] + anchor.width / 2f)
             centerY = (a[1] - o[1] + anchor.height / 2f)
@@ -512,22 +553,26 @@ class FontIcon @JvmOverloads constructor(
                 setStroke(if (highlight) dp(2f) else 0, Color.parseColor("#2A6AFB"))
             }
 
+
         private fun updateHighlight(x: Float, y: Float) {
             val idx = indexAt(x, y)
             if (idx == highlighted) return
-            // remove old highlight
-            if (highlighted in views.indices) {
-                (views[highlighted].background as? GradientDrawable)?.apply {
-                    setColor(Color.parseColor("#F2F2F2")); setStroke(0, Color.TRANSPARENT)
-                }
-                views[highlighted].invalidate()
-            }
+
+            if (highlighted in views.indices) applyHighlight(views[highlighted], false)
             highlighted = idx
-            // apply new highlight
-            if (highlighted in views.indices) {
-                views[highlighted].background = newBubbleBackground(true)
+            if (highlighted in views.indices) applyHighlight(views[highlighted], true)
+        }
+        private fun applyHighlight(view: View, on: Boolean) {
+            view.background = newBubbleBackground(on)
+            if (on) {
+                view.animate().scaleX(1.12f).scaleY(1.12f).setDuration(80).start()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) view.elevation = dp(4f).toFloat()
+            } else {
+                view.animate().scaleX(1f).scaleY(1f).setDuration(80).start()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) view.elevation = 0f
             }
         }
+
 
         private fun indexAt(x: Float, y: Float): Int {
             // pick the closest view by center distance (inside a radius threshold)
