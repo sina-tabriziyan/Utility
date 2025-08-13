@@ -11,12 +11,17 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Build
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.Log
+import android.util.TypedValue
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.PopupWindow
@@ -25,116 +30,131 @@ import com.sina.library.utility.R
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
-import androidx.core.graphics.drawable.toDrawable
-
 
 class FontIcon @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
+
+    // --- Radial menu public API ---
     var radialMenuIcons: List<String> = emptyList()
-
-    /** Size of menu items relative to this view (e.g., 0.8f = 80%) */
-    var radialItemScale: Float = 0.8f
-
-    /** Radius in px for the ring of items (you can tweak dynamically) */
-    var radialRadiusPx: Float = 160f
-
-    /** Haptic + animation toggles if you want them later */
+    var radialItemScale: Float = 0.8f     // relative to this view size
+    var radialRadiusPx: Float = 160f      // absolute px radius
     var radialUseHaptics: Boolean = true
-    enum class BackgroundShape {
-        OVAL, RECTANGLE, ROUNDED
-    }
+
+    enum class BackgroundShape { OVAL, RECTANGLE, ROUNDED }
+
+    private var lastPopupAt = 0L
+
+    private val detector = GestureDetector(
+        context,
+        object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                showRadialIfPossible()
+            }
+        })
 
     init {
-        // Load the custom font
-        typeface = Typeface.createFromAsset(context.assets, "fonticons.ttf")
+        // Load the custom font (won't crash if missing)
+        try {
+            typeface = Typeface.createFromAsset(context.assets, "fonticons.ttf")
+        } catch (t: Throwable) {
+            Log.w("FontIcon", "fonticons.ttf not found in /assets (only affects glyphs).", t)
+        }
 
-        // Default values
+        // Defaults
         var desiredShape = BackgroundShape.RECTANGLE
         var bgColor = Color.TRANSPARENT
         var enableRipple = false
-        var shouldCreateCustomBackground = true // Assume we'll create it
-        if (this.background != null) {
-            shouldCreateCustomBackground = false
-        }
-
+        var shouldCreateCustomBackground = this.background == null
         var strokeColor = Color.TRANSPARENT
-        var strokeWidth = 0 // Default stroke width
-        attrs?.let { attributeSet ->
-            val typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.FontIcon)
-            try {
-                val iconCode = typedArray.getString(R.styleable.FontIcon_setIcon)
-                if (!iconCode.isNullOrEmpty()) {
-                    setIcon(iconCode)
-                }
+        var strokeWidth = 0
 
-                val tintColor = typedArray.getColor(R.styleable.FontIcon_tint, currentTextColor)
+        // Read custom attrs if present
+        attrs?.let { attributeSet ->
+            val ta = context.obtainStyledAttributes(attributeSet, R.styleable.FontIcon)
+            try {
+                val iconCode = ta.getString(R.styleable.FontIcon_setIcon)
+                if (!iconCode.isNullOrEmpty()) setIcon(iconCode)
+
+                val tintColor = ta.getColor(R.styleable.FontIcon_tint, currentTextColor)
                 setTextColor(tintColor)
 
                 if (shouldCreateCustomBackground) {
-                    val shapeValue = typedArray.getInt(R.styleable.FontIcon_backgroundShape, 1)
-                    desiredShape = when (shapeValue) {
+                    desiredShape = when (ta.getInt(R.styleable.FontIcon_backgroundShape, 1)) {
                         0 -> BackgroundShape.OVAL
                         1 -> BackgroundShape.RECTANGLE
                         2 -> BackgroundShape.ROUNDED
                         else -> BackgroundShape.RECTANGLE
                     }
-
-                    bgColor =
-                        typedArray.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
-                    enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
+                    bgColor = ta.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
+                    enableRipple = ta.getBoolean(R.styleable.FontIcon_ripple, false)
                 } else {
-                    enableRipple = typedArray.getBoolean(R.styleable.FontIcon_ripple, false)
-                    if (enableRipple && this.background != null && this.background !is RippleDrawable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        val rippleColorStateList =
-                            ColorStateList.valueOf(Color.parseColor("#33000000"))
-                        this.background =
-                            RippleDrawable(rippleColorStateList, this.background, null)
+                    enableRipple = ta.getBoolean(R.styleable.FontIcon_ripple, false)
+                    if (enableRipple &&
+                        this.background != null &&
+                        this.background !is RippleDrawable &&
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+                    ) {
+                        val ripple = ColorStateList.valueOf(Color.parseColor("#33000000"))
+                        this.background = RippleDrawable(ripple, this.background, null)
                     }
                 }
-                strokeColor = typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
-                strokeWidth = typedArray.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
-                gravity = Gravity.CENTER
 
+                strokeColor = ta.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
+                strokeWidth = ta.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
+                gravity = Gravity.CENTER
             } finally {
-                typedArray.recycle()
+                ta.recycle()
             }
         }
 
-
-        // Apply background with optional ripple
-        // OR if XML background was set, but we handled ripple above.
         if (shouldCreateCustomBackground) {
             background = createBackgroundDrawable(
-                desiredShape,
-                bgColor,
-                enableRipple,
-                strokeColor,
-                strokeWidth
+                desiredShape, bgColor, enableRipple, strokeColor, strokeWidth
             )
         }
+
         isClickable = true
         isFocusable = true
-        isLongClickable = true // make it explicit
+        isLongClickable = true
+
+        // Classic long-click (works in simple containers)
         setOnLongClickListener {
-            if (radialMenuIcons.isNotEmpty()) {
-                if (radialUseHaptics) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                RadialIconPopup.show(
-                    anchor = this,
-                    iconHexList = radialMenuIcons,
-                    itemScale = radialItemScale,
-                    radiusPx = radialRadiusPx
-                ) { pickedHex ->
-                    // When user picks, apply:
-                    setIcon(pickedHex)
-                }
-                true
-            } else {
-                true
-            }
+            showRadialIfPossible()
         }
+
+        // Robust long-press: avoid parent intercept (Recycler/ScrollView)
+        setOnTouchListener { v, ev ->
+            if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+                v.parent?.requestDisallowInterceptTouchEvent(true) // ViewParent method
+            }
+            detector.onTouchEvent(ev)
+            false
+        }
+
+    }
+
+    private fun showRadialIfPossible(): Boolean {
+        if (radialMenuIcons.isEmpty()) {
+            Log.w("FontIcon", "radialMenuIcons is empty — nothing to show.")
+            return true
+        }
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastPopupAt < 250) return true // guard double trigger
+        lastPopupAt = now
+
+        if (radialUseHaptics) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        RadialIconPopup.show(
+            anchor = this,
+            iconHexList = radialMenuIcons,
+            itemScale = radialItemScale,
+            radiusPx = radialRadiusPx
+        ) { pickedHex ->
+            setIcon(pickedHex)
+        }
+        return true
     }
 
     fun setIcon(iconCode: String) {
@@ -142,8 +162,7 @@ class FontIcon @JvmOverloads constructor(
             val iconChar = String(Character.toChars(iconCode.toInt(16)))
             text = iconChar
         } catch (e: Exception) {
-            e.printStackTrace()
-
+            Log.e("FontIcon", "Invalid icon hex: $iconCode", e)
         }
     }
 
@@ -165,26 +184,18 @@ class FontIcon @JvmOverloads constructor(
         }
 
         return if (ripple && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val rippleColor =
-                ColorStateList.valueOf(Color.parseColor("#33000000")) // semi-transparent black
+            val rippleColor = ColorStateList.valueOf(Color.parseColor("#33000000"))
             RippleDrawable(rippleColor, shapeDrawable, null)
         } else {
             shapeDrawable
         }
     }
-
 }
 
 
+
 object RadialIconPopup {
-    private fun findActivity(view: View): Activity? {
-        var ctx = view.context
-        while (ctx is ContextWrapper) {
-            if (ctx is Activity) return ctx
-            ctx = ctx.baseContext
-        }
-        return null
-    }
+
     private var popup: PopupWindow? = null
 
     fun show(
@@ -196,80 +207,81 @@ object RadialIconPopup {
     ) {
         val ctx = anchor.context
         val activity = findActivity(anchor)
-        val parentForWindow: ViewGroup? = activity?.findViewById(android.R.id.content)
-        val containerToAttach = parentForWindow ?: (anchor.rootView as? ViewGroup)
+        val attachTo: ViewGroup? = activity?.findViewById(android.R.id.content)
+            ?: (anchor.rootView as? ViewGroup)
 
-        if (containerToAttach == null) {
+        if (attachTo == null) {
             Log.w("RadialIconPopup", "No suitable parent to attach PopupWindow.")
             return
         }
+
         val root = FrameLayout(ctx).apply {
             isClickable = true
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setOnClickListener { popup?.dismiss() } // tap outside to dismiss
+            // outside tap to dismiss
+            setOnClickListener { popup?.dismiss() }
+            // DEBUG: uncomment to verify overlay is shown
+            // setBackgroundColor(0x11FF0000.toInt())
         }
 
         val pw = PopupWindow(
             root,
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
-            true /* focusable */
+            true // focusable => back button & outside dismiss work
         ).apply {
             isClippingEnabled = false
-            // Use ColorDrawable to ensure touch handling works
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT)) // must be non-null
             isOutsideTouchable = true
             elevation = 0f
         }
         popup = pw
 
-        // 1) Show the popup first so root has a window & coords
-        val parent = anchor.rootView
-        pw.showAtLocation(parent, Gravity.NO_GRAVITY, 0, 0)
-        pw.showAtLocation(containerToAttach, Gravity.NO_GRAVITY, 0, 0)
-        // 2) Now that it's attached, post to lay out children
+        // Show FIRST so root has coordinates/window
+        pw.showAtLocation(attachTo, Gravity.NO_GRAVITY, 0, 0)
+
+        // Lay out children after attach
         root.post {
-            // Anchor center in SCREEN coords
+            // Anchor center (SCREEN coords)
             val anchorLoc = IntArray(2)
             anchor.getLocationOnScreen(anchorLoc)
             val anchorCxScreen = anchorLoc[0] + anchor.width / 2f
             val anchorCyScreen = anchorLoc[1] + anchor.height / 2f
 
-            // Root top-left in SCREEN coords (for conversion)
+            // Root origin (SCREEN coords)
             val rootLoc = IntArray(2)
             root.getLocationOnScreen(rootLoc)
             val rootX = rootLoc[0].toFloat()
             val rootY = rootLoc[1].toFloat()
 
-            // Compute child size
             val itemSize = (min(anchor.width, anchor.height) * itemScale).toInt().coerceAtLeast(24)
-
-            // Distribute items around a circle
             val count = iconHexList.size.coerceAtLeast(1)
             val angleStep = 360f / count
 
             iconHexList.forEachIndexed { idx, hex ->
-                val angleDeg = idx * angleStep - 90f
+                val angleDeg = idx * angleStep - 90f // start at top
                 val angleRad = Math.toRadians(angleDeg.toDouble())
 
+                // target center in SCREEN coords
                 val cxScreen = (anchorCxScreen + radiusPx * cos(angleRad)).toFloat()
                 val cyScreen = (anchorCyScreen + radiusPx * sin(angleRad)).toFloat()
 
-                // 3) Convert SCREEN coords → ROOT coords
+                // convert to ROOT coords
                 val cx = cxScreen - rootX
                 val cy = cyScreen - rootY
 
                 val child = FontIcon(ctx).apply {
-                    textSize = 14f // sp; lightweight defaults are fine
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
                     setIcon(hex)
                     gravity = Gravity.CENTER
                     isClickable = true
                     isFocusable = true
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
+                    // subtle rounded bg for better hit area
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        shape = android.graphics.drawable.GradientDrawable.RECTANGLE
                         cornerRadius = itemSize * 0.3f
                         setColor(Color.parseColor("#F2FFFFFF"))
                     }
@@ -282,15 +294,15 @@ object RadialIconPopup {
                 }
                 root.addView(child, lp)
 
-                // Animate from anchor center to target (in ROOT coords)
-                val startTx = (anchorCxScreen - rootX) - cx
-                val startTy = (anchorCyScreen - rootY) - cy
+                // animate from anchor center (in ROOT coords)
+                val anchorCxRoot = anchorCxScreen - rootX
+                val anchorCyRoot = anchorCyScreen - rootY
 
                 child.scaleX = 0f
                 child.scaleY = 0f
                 child.alpha = 0f
-                child.translationX = startTx
-                child.translationY = startTy
+                child.translationX = (anchorCxRoot - cx)
+                child.translationY = (anchorCyRoot - cy)
 
                 child.animate()
                     .scaleX(1f).scaleY(1f)
@@ -307,5 +319,13 @@ object RadialIconPopup {
             }
         }
     }
-}
 
+    private fun findActivity(view: View): Activity? {
+        var ctx: Context = view.context
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) return ctx
+            ctx = ctx.baseContext
+        }
+        return null
+    }
+}
