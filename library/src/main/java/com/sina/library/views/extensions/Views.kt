@@ -36,10 +36,12 @@ import android.text.TextUtils
 import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
@@ -83,6 +85,7 @@ import okhttp3.Headers
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -1266,6 +1269,68 @@ object ViewExtensions {
     fun View.setVisibleOrGone(dataModify: String?) {
         Log.e("TAG", "setVisibleOrGone: $dataModify")
         this.visibility = if (dataModify.equals("0")) View.GONE else View.VISIBLE
+    }
+    fun View.makeMovableFriendly() {
+        val slop = ViewConfiguration.get(context).scaledTouchSlop
+        var downX = 0f
+        var downY = 0f
+        var dragging = false
+
+        // Detect long-press and clicks without breaking them
+        val gd = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                // This triggers FontIcon's setOnLongClickListener
+                performLongClick()
+            }
+
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                performClick()
+                return true
+            }
+        })
+
+        setOnTouchListener { v, ev ->
+            // Let GestureDetector handle long-press/click timings
+            gd.onTouchEvent(ev)
+
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = ev.rawX
+                    downY = ev.rawY
+                    dragging = false
+                    // RETURN FALSE here so the system can still deliver long-press
+                    // (we’ll switch to TRUE only when dragging actually starts)
+                    false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = ev.rawX - downX
+                    val dy = ev.rawY - downY
+                    if (!dragging && (abs(dx) > slop || abs(dy) > slop)) {
+                        dragging = true
+                        // When we start dragging, disallow parents from intercepting
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                    }
+                    if (dragging) {
+                        v.translationX += dx
+                        v.translationY += dy
+                        downX = ev.rawX
+                        downY = ev.rawY
+                        // We are now handling the gesture
+                        true
+                    } else {
+                        // Not dragging yet → don’t consume (keep long-press alive)
+                        false
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    dragging = false
+                    parent?.requestDisallowInterceptTouchEvent(false)
+                    // Don’t consume UP unless we were dragging
+                    false
+                }
+                else -> false
+            }
+        }
     }
 
     fun FontIcon.makeMovable() {
