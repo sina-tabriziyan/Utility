@@ -125,14 +125,14 @@ class FontIcon @JvmOverloads constructor(
             showRadialIfPossible()
         }
 
-        // Robust long-press: avoid parent intercept (Recycler/ScrollView)
-        setOnTouchListener { v, ev ->
-            if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
-                v.parent?.requestDisallowInterceptTouchEvent(true) // ViewParent method
-            }
-            detector.onTouchEvent(ev)
-            false
-        }
+//        // Robust long-press: avoid parent intercept (Recycler/ScrollView)
+//        setOnTouchListener { v, ev ->
+//            if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+//                v.parent?.requestDisallowInterceptTouchEvent(true) // ViewParent method
+//            }
+//            detector.onTouchEvent(ev)
+//            false
+//        }
 
     }
 
