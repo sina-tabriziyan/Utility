@@ -60,7 +60,7 @@ class FontIcon @JvmOverloads constructor(
         // optional: keep compatibility with your old setter
         setSurroundingIcons(items.map { it.hex })
     }
-
+    fun isRadialOpen(): Boolean = showingOverlay
     // inside class FontIcon : AppCompatTextView { ... }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
