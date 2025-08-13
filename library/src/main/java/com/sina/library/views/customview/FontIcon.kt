@@ -4,14 +4,25 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.util.AttributeSet
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
+import android.view.View
+import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
+import android.widget.FrameLayout
+import android.widget.PopupWindow
 import androidx.appcompat.widget.AppCompatTextView
 import com.sina.library.utility.R
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
+import androidx.core.graphics.drawable.toDrawable
 
 
 class FontIcon @JvmOverloads constructor(
@@ -19,7 +30,16 @@ class FontIcon @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
+    var radialMenuIcons: List<String> = emptyList()
 
+    /** Size of menu items relative to this view (e.g., 0.8f = 80%) */
+    var radialItemScale: Float = 0.8f
+
+    /** Radius in px for the ring of items (you can tweak dynamically) */
+    var radialRadiusPx: Float = 160f
+
+    /** Haptic + animation toggles if you want them later */
+    var radialUseHaptics: Boolean = true
     enum class BackgroundShape {
         OVAL, RECTANGLE, ROUNDED
     }
@@ -71,19 +91,8 @@ class FontIcon @JvmOverloads constructor(
                             RippleDrawable(rippleColorStateList, this.background, null)
                     }
                 }
-                // Get stroke color and width
-                strokeColor =
-                    typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
+                strokeColor = typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
                 strokeWidth = typedArray.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
-                // Handle textPosition (if you plan to use it)
-                val textPositionValue = typedArray.getInt(R.styleable.FontIcon_textPosition, 0)
-//                val iconPosition = when (textPositionValue) {
-//                    0 -> Gravity.TOP
-//                    1 -> Gravity.BOTTOM
-//                    2 -> Gravity.START
-//                    3 -> Gravity.END
-//                    else -> Gravity.CENTER
-//                }
                 gravity = Gravity.CENTER
 
             } finally {
@@ -105,6 +114,24 @@ class FontIcon @JvmOverloads constructor(
         }
         isClickable = true
         isFocusable = true
+
+        setOnLongClickListener {
+            if (radialMenuIcons.isNotEmpty()) {
+                if (radialUseHaptics) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                RadialIconPopup.show(
+                    anchor = this,
+                    iconHexList = radialMenuIcons,
+                    itemScale = radialItemScale,
+                    radiusPx = radialRadiusPx
+                ) { pickedHex ->
+                    // When user picks, apply:
+                    setIcon(pickedHex)
+                }
+                true
+            } else {
+                false
+            }
+        }
     }
 
     fun setIcon(iconCode: String) {
@@ -143,4 +170,113 @@ class FontIcon @JvmOverloads constructor(
         }
     }
 
+}
+
+
+object RadialIconPopup {
+
+    fun show(
+        anchor: View,
+        iconHexList: List<String>,
+        itemScale: Float = 0.8f,
+        radiusPx: Float = 160f,
+        onPick: (String) -> Unit
+    ) {
+        val ctx = anchor.context
+        val root = FrameLayout(ctx).apply {
+            isClickable = true
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setOnClickListener { popup?.dismiss() } // outside tap
+        }
+
+        // Build the popup
+        val popupWindow = PopupWindow(
+            root,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            true
+        ).apply {
+            isClippingEnabled = false
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+            elevation = 0f
+        }
+
+        popup = popupWindow
+
+        // Post so anchor has final layout
+        anchor.post {
+            // Anchor center on screen
+            val location = IntArray(2)
+            anchor.getLocationOnScreen(location)
+            val anchorCx = location[0] + anchor.width / 2f
+            val anchorCy = location[1] + anchor.height / 2f
+
+            // Compute child size
+            val itemSize = (min(anchor.width, anchor.height) * itemScale).toInt().coerceAtLeast(24)
+
+            // Distribute icons on a circle (you can switch to a 180° arc if preferred)
+            val count = iconHexList.size.coerceAtLeast(1)
+            val angleStep = (360f / count)
+
+            iconHexList.forEachIndexed { idx, hex ->
+                val angleDeg = idx * angleStep - 90f // start at top
+                val angleRad = Math.toRadians(angleDeg.toDouble())
+
+                val cx = (anchorCx + radiusPx * cos(angleRad)).toFloat()
+                val cy = (anchorCy + radiusPx * sin(angleRad)).toFloat()
+
+                val child = FontIcon(ctx).apply {
+                    // Smaller icon buttons
+                    textSize = anchor.resources.displayMetrics.scaledDensity * 14 // adjust if needed
+                    setIcon(hex)
+                    gravity = Gravity.CENTER
+                    isClickable = true
+                    isFocusable = true
+                    // a subtle rounded bg so items are tappable
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = itemSize * 0.3f
+                        setColor(Color.parseColor("#F2FFFFFF")) // translucent
+                    }
+                    // optional: ripple on children if you like
+                }
+
+                val lp = FrameLayout.LayoutParams(itemSize, itemSize)
+                // Position by setting margins so its center lands on (cx, cy)
+                lp.leftMargin = (cx - itemSize / 2f).toInt()
+                lp.topMargin  = (cy - itemSize / 2f).toInt()
+                root.addView(child, lp)
+
+                // Animate from anchor center -> target
+                child.scaleX = 0f
+                child.scaleY = 0f
+                child.alpha = 0f
+                child.translationX = (anchorCx - cx)
+                child.translationY = (anchorCy - cy)
+
+                child.animate()
+                    .scaleX(1f).scaleY(1f)
+                    .alpha(1f)
+                    .translationX(0f).translationY(0f)
+                    .setDuration(140)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+
+                child.setOnClickListener {
+                    onPick(hex)
+                    popupWindow.dismiss()
+                }
+            }
+        }
+
+        // Show it
+        val parent = anchor.rootView
+        popupWindow.showAtLocation(parent, Gravity.NO_GRAVITY, 0, 0)
+    }
+
+    // Just to keep a handle for outside-tap dismiss
+    private var popup: PopupWindow? = null
 }
