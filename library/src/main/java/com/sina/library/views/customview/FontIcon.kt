@@ -12,9 +12,6 @@ import android.util.AttributeSet
 import android.view.Gravity
 import androidx.appcompat.widget.AppCompatTextView
 import com.sina.library.utility.R
-
-
-
 import android.animation.TimeInterpolator
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +37,11 @@ class FontIcon @JvmOverloads constructor(
     private val overlayRadiusDp = 64f          // distance from main icon center
     private val overlayItemSizeDp = 28f        // diameter/side of preview icons
     private val overlayAnimDuration = 200L
+    private var externalClick: ((FontIcon) -> Unit)? = null
+    fun setOnMainClickListener(block: (FontIcon) -> Unit) {
+        externalClick = block
+    }
+
     // ------------------------------------------------
 
     init {
@@ -79,11 +81,13 @@ class FontIcon @JvmOverloads constructor(
                     if (enableRipple && background != null && background !is RippleDrawable &&
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
                     ) {
-                        val rippleColorStateList = ColorStateList.valueOf(Color.parseColor("#33000000"))
+                        val rippleColorStateList =
+                            ColorStateList.valueOf(Color.parseColor("#33000000"))
                         background = RippleDrawable(rippleColorStateList, background, null)
                     }
                 }
-                strokeColor = typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
+                strokeColor =
+                    typedArray.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
                 strokeWidth = typedArray.getDimensionPixelSize(R.styleable.FontIcon_strokeWidth, 0)
 
                 gravity = Gravity.CENTER
@@ -93,7 +97,13 @@ class FontIcon @JvmOverloads constructor(
         }
 
         if (shouldCreateCustomBackground) {
-            background = createBackgroundDrawable(desiredShape, bgColor, enableRipple, strokeColor, strokeWidth)
+            background = createBackgroundDrawable(
+                desiredShape,
+                bgColor,
+                enableRipple,
+                strokeColor,
+                strokeWidth
+            )
         }
         isClickable = true
         isFocusable = true
@@ -106,8 +116,11 @@ class FontIcon @JvmOverloads constructor(
             } else false
         }
         setOnClickListener {
-            if (showingOverlay) hideRadialOverlay()
-            // else: let your normal click do whatever it does
+            if (showingOverlay) {
+                hideRadialOverlay()
+            } else {
+                externalClick?.invoke(this)
+            }
         }
         // --------------------------------------
     }
@@ -116,7 +129,8 @@ class FontIcon @JvmOverloads constructor(
         try {
             val iconChar = String(Character.toChars(iconCode.toInt(16)))
             text = iconChar
-        } catch (_: Exception) { /* ignore */ }
+        } catch (_: Exception) { /* ignore */
+        }
     }
 
     // ---------- NEW: API to set surrounding icon hex codes (no 0x) ----------
@@ -247,7 +261,9 @@ class FontIcon @JvmOverloads constructor(
                     layoutParams = LayoutParams(itemSizePx, itemSizePx)
                     text = try {
                         String(Character.toChars(hex.toInt(16)))
-                    } catch (_: Exception) { "?" }
+                    } catch (_: Exception) {
+                        "?"
+                    }
                     background = GradientDrawable().apply {
                         shape = GradientDrawable.OVAL
                         setColor(Color.parseColor("#F2F2F2"))
