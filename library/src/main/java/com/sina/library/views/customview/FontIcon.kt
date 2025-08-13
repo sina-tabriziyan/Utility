@@ -175,6 +175,8 @@ class FontIcon @JvmOverloads constructor(
 
 object RadialIconPopup {
 
+    private var popup: PopupWindow? = null
+
     fun show(
         anchor: View,
         iconHexList: List<String>,
@@ -189,73 +191,87 @@ object RadialIconPopup {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setOnClickListener { popup?.dismiss() } // outside tap
+            setOnClickListener { popup?.dismiss() } // tap outside to dismiss
         }
 
-        // Build the popup
-        val popupWindow = PopupWindow(
+        val pw = PopupWindow(
             root,
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
-            true
+            true /* focusable */
         ).apply {
             isClippingEnabled = false
-            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+            // Use ColorDrawable to ensure touch handling works
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            isOutsideTouchable = true
             elevation = 0f
         }
+        popup = pw
 
-        popup = popupWindow
+        // 1) Show the popup first so root has a window & coords
+        val parent = anchor.rootView
+        pw.showAtLocation(parent, Gravity.NO_GRAVITY, 0, 0)
 
-        // Post so anchor has final layout
-        anchor.post {
-            // Anchor center on screen
-            val location = IntArray(2)
-            anchor.getLocationOnScreen(location)
-            val anchorCx = location[0] + anchor.width / 2f
-            val anchorCy = location[1] + anchor.height / 2f
+        // 2) Now that it's attached, post to lay out children
+        root.post {
+            // Anchor center in SCREEN coords
+            val anchorLoc = IntArray(2)
+            anchor.getLocationOnScreen(anchorLoc)
+            val anchorCxScreen = anchorLoc[0] + anchor.width / 2f
+            val anchorCyScreen = anchorLoc[1] + anchor.height / 2f
+
+            // Root top-left in SCREEN coords (for conversion)
+            val rootLoc = IntArray(2)
+            root.getLocationOnScreen(rootLoc)
+            val rootX = rootLoc[0].toFloat()
+            val rootY = rootLoc[1].toFloat()
 
             // Compute child size
             val itemSize = (min(anchor.width, anchor.height) * itemScale).toInt().coerceAtLeast(24)
 
-            // Distribute icons on a circle (you can switch to a 180° arc if preferred)
+            // Distribute items around a circle
             val count = iconHexList.size.coerceAtLeast(1)
-            val angleStep = (360f / count)
+            val angleStep = 360f / count
 
             iconHexList.forEachIndexed { idx, hex ->
-                val angleDeg = idx * angleStep - 90f // start at top
+                val angleDeg = idx * angleStep - 90f
                 val angleRad = Math.toRadians(angleDeg.toDouble())
 
-                val cx = (anchorCx + radiusPx * cos(angleRad)).toFloat()
-                val cy = (anchorCy + radiusPx * sin(angleRad)).toFloat()
+                val cxScreen = (anchorCxScreen + radiusPx * cos(angleRad)).toFloat()
+                val cyScreen = (anchorCyScreen + radiusPx * sin(angleRad)).toFloat()
+
+                // 3) Convert SCREEN coords → ROOT coords
+                val cx = cxScreen - rootX
+                val cy = cyScreen - rootY
 
                 val child = FontIcon(ctx).apply {
-                    // Smaller icon buttons
-                    textSize = anchor.resources.displayMetrics.scaledDensity * 14 // adjust if needed
+                    textSize = 14f // sp; lightweight defaults are fine
                     setIcon(hex)
                     gravity = Gravity.CENTER
                     isClickable = true
                     isFocusable = true
-                    // a subtle rounded bg so items are tappable
                     background = GradientDrawable().apply {
                         shape = GradientDrawable.RECTANGLE
                         cornerRadius = itemSize * 0.3f
-                        setColor(Color.parseColor("#F2FFFFFF")) // translucent
+                        setColor(Color.parseColor("#F2FFFFFF"))
                     }
-                    // optional: ripple on children if you like
                 }
 
-                val lp = FrameLayout.LayoutParams(itemSize, itemSize)
-                // Position by setting margins so its center lands on (cx, cy)
-                lp.leftMargin = (cx - itemSize / 2f).toInt()
-                lp.topMargin  = (cy - itemSize / 2f).toInt()
+                val lp = FrameLayout.LayoutParams(itemSize, itemSize).apply {
+                    leftMargin = (cx - itemSize / 2f).toInt()
+                    topMargin  = (cy - itemSize / 2f).toInt()
+                }
                 root.addView(child, lp)
 
-                // Animate from anchor center -> target
+                // Animate from anchor center to target (in ROOT coords)
+                val startTx = (anchorCxScreen - rootX) - cx
+                val startTy = (anchorCyScreen - rootY) - cy
+
                 child.scaleX = 0f
                 child.scaleY = 0f
                 child.alpha = 0f
-                child.translationX = (anchorCx - cx)
-                child.translationY = (anchorCy - cy)
+                child.translationX = startTx
+                child.translationY = startTy
 
                 child.animate()
                     .scaleX(1f).scaleY(1f)
@@ -267,16 +283,10 @@ object RadialIconPopup {
 
                 child.setOnClickListener {
                     onPick(hex)
-                    popupWindow.dismiss()
+                    pw.dismiss()
                 }
             }
         }
-
-        // Show it
-        val parent = anchor.rootView
-        popupWindow.showAtLocation(parent, Gravity.NO_GRAVITY, 0, 0)
     }
-
-    // Just to keep a handle for outside-tap dismiss
-    private var popup: PopupWindow? = null
 }
+
