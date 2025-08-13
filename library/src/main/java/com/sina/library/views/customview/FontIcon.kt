@@ -1,6 +1,8 @@
 package com.sina.library.views.customview
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
@@ -10,6 +12,7 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -114,7 +117,7 @@ class FontIcon @JvmOverloads constructor(
         }
         isClickable = true
         isFocusable = true
-
+        isLongClickable = true // make it explicit
         setOnLongClickListener {
             if (radialMenuIcons.isNotEmpty()) {
                 if (radialUseHaptics) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -129,7 +132,7 @@ class FontIcon @JvmOverloads constructor(
                 }
                 true
             } else {
-                false
+                true
             }
         }
     }
@@ -174,7 +177,14 @@ class FontIcon @JvmOverloads constructor(
 
 
 object RadialIconPopup {
-
+    private fun findActivity(view: View): Activity? {
+        var ctx = view.context
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) return ctx
+            ctx = ctx.baseContext
+        }
+        return null
+    }
     private var popup: PopupWindow? = null
 
     fun show(
@@ -185,6 +195,14 @@ object RadialIconPopup {
         onPick: (String) -> Unit
     ) {
         val ctx = anchor.context
+        val activity = findActivity(anchor)
+        val parentForWindow: ViewGroup? = activity?.findViewById(android.R.id.content)
+        val containerToAttach = parentForWindow ?: (anchor.rootView as? ViewGroup)
+
+        if (containerToAttach == null) {
+            Log.w("RadialIconPopup", "No suitable parent to attach PopupWindow.")
+            return
+        }
         val root = FrameLayout(ctx).apply {
             isClickable = true
             layoutParams = FrameLayout.LayoutParams(
@@ -211,7 +229,7 @@ object RadialIconPopup {
         // 1) Show the popup first so root has a window & coords
         val parent = anchor.rootView
         pw.showAtLocation(parent, Gravity.NO_GRAVITY, 0, 0)
-
+        pw.showAtLocation(containerToAttach, Gravity.NO_GRAVITY, 0, 0)
         // 2) Now that it's attached, post to lay out children
         root.post {
             // Anchor center in SCREEN coords
@@ -255,6 +273,7 @@ object RadialIconPopup {
                         cornerRadius = itemSize * 0.3f
                         setColor(Color.parseColor("#F2FFFFFF"))
                     }
+                    contentDescription = "Icon $hex"
                 }
 
                 val lp = FrameLayout.LayoutParams(itemSize, itemSize).apply {
