@@ -23,6 +23,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewParent
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
 import android.widget.PopupWindow
 import androidx.appcompat.widget.AppCompatTextView
@@ -37,17 +38,17 @@ class FontIcon @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
 
-    // --- Radial menu public API ---
+    // Radial menu public API
     var radialMenuIcons: List<String> = emptyList()
-    var radialItemScale: Float = 0.8f     // relative to this view size
-    var radialRadiusPx: Float = 160f      // absolute px radius
+    var radialItemScale: Float = 0.8f
+    var radialRadiusPx: Float = 160f
     var radialUseHaptics: Boolean = true
 
     enum class BackgroundShape { OVAL, RECTANGLE, ROUNDED }
 
     private var lastPopupAt = 0L
 
-    private val detector = GestureDetector(
+    private val gestureDetector = GestureDetector(
         context,
         object : GestureDetector.SimpleOnGestureListener() {
             override fun onLongPress(e: MotionEvent) {
@@ -56,30 +57,29 @@ class FontIcon @JvmOverloads constructor(
         })
 
     init {
-        // Load the custom font (won't crash if missing)
+        // Load font
         try {
             typeface = Typeface.createFromAsset(context.assets, "fonticons.ttf")
         } catch (t: Throwable) {
-            Log.w("FontIcon", "fonticons.ttf not found in /assets (only affects glyphs).", t)
+            Log.w("FontIcon", "fonticons.ttf not found", t)
         }
 
         // Defaults
         var desiredShape = BackgroundShape.RECTANGLE
         var bgColor = Color.TRANSPARENT
         var enableRipple = false
-        var shouldCreateCustomBackground = this.background == null
+        var shouldCreateCustomBackground = background == null
         var strokeColor = Color.TRANSPARENT
         var strokeWidth = 0
 
-        // Read custom attrs if present
+        // Read attributes
         attrs?.let { attributeSet ->
             val ta = context.obtainStyledAttributes(attributeSet, R.styleable.FontIcon)
             try {
                 val iconCode = ta.getString(R.styleable.FontIcon_setIcon)
                 if (!iconCode.isNullOrEmpty()) setIcon(iconCode)
 
-                val tintColor = ta.getColor(R.styleable.FontIcon_tint, currentTextColor)
-                setTextColor(tintColor)
+                setTextColor(ta.getColor(R.styleable.FontIcon_tint, currentTextColor))
 
                 if (shouldCreateCustomBackground) {
                     desiredShape = when (ta.getInt(R.styleable.FontIcon_backgroundShape, 1)) {
@@ -90,16 +90,6 @@ class FontIcon @JvmOverloads constructor(
                     }
                     bgColor = ta.getColor(R.styleable.FontIcon_backgroundColor, Color.TRANSPARENT)
                     enableRipple = ta.getBoolean(R.styleable.FontIcon_ripple, false)
-                } else {
-                    enableRipple = ta.getBoolean(R.styleable.FontIcon_ripple, false)
-                    if (enableRipple &&
-                        this.background != null &&
-                        this.background !is RippleDrawable &&
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                    ) {
-                        val ripple = ColorStateList.valueOf(Color.parseColor("#33000000"))
-                        this.background = RippleDrawable(ripple, this.background, null)
-                    }
                 }
 
                 strokeColor = ta.getColor(R.styleable.FontIcon_strokeColor, Color.TRANSPARENT)
@@ -116,36 +106,44 @@ class FontIcon @JvmOverloads constructor(
             )
         }
 
+        // Touch handling
         isClickable = true
         isFocusable = true
         isLongClickable = true
 
-        // Classic long-click (works in simple containers)
         setOnLongClickListener {
             showRadialIfPossible()
+            true
         }
 
-//        // Robust long-press: avoid parent intercept (Recycler/ScrollView)
-//        setOnTouchListener { v, ev ->
-//            if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
-//                v.parent?.requestDisallowInterceptTouchEvent(true) // ViewParent method
-//            }
-//            detector.onTouchEvent(ev)
-//            false
-//        }
+        setOnTouchListener { v, event ->
+            gestureDetector.onTouchEvent(event)
 
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                    // Return true to ensure we get subsequent events
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun showRadialIfPossible(): Boolean {
         if (radialMenuIcons.isEmpty()) {
-            Log.w("FontIcon", "radialMenuIcons is empty — nothing to show.")
+            Log.w("FontIcon", "No radial menu icons set")
             return true
         }
+
         val now = SystemClock.elapsedRealtime()
-        if (now - lastPopupAt < 250) return true // guard double trigger
+        if (now - lastPopupAt < 250) return true
         lastPopupAt = now
 
-        if (radialUseHaptics) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        if (radialUseHaptics) {
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        }
+
         RadialIconPopup.show(
             anchor = this,
             iconHexList = radialMenuIcons,
@@ -184,8 +182,11 @@ class FontIcon @JvmOverloads constructor(
         }
 
         return if (ripple && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val rippleColor = ColorStateList.valueOf(Color.parseColor("#33000000"))
-            RippleDrawable(rippleColor, shapeDrawable, null)
+            RippleDrawable(
+                ColorStateList.valueOf(Color.parseColor("#33000000")),
+                shapeDrawable,
+                null
+            )
         } else {
             shapeDrawable
         }
@@ -205,126 +206,109 @@ object RadialIconPopup {
         radiusPx: Float = 160f,
         onPick: (String) -> Unit
     ) {
-        val ctx = anchor.context
-        val activity = findActivity(anchor)
-        val attachTo: ViewGroup? = activity?.findViewById(android.R.id.content)
-            ?: (anchor.rootView as? ViewGroup)
+        // Dismiss any existing popup
+        popup?.dismiss()
 
-        if (attachTo == null) {
-            Log.w("RadialIconPopup", "No suitable parent to attach PopupWindow.")
-            return
-        }
+        val context = anchor.context
+        val activity = context.findActivity()
+        val rootView = activity?.window?.decorView?.findViewById<ViewGroup>(android.R.id.content)
+            ?: return
 
-        val root = FrameLayout(ctx).apply {
-            isClickable = true
-            layoutParams = FrameLayout.LayoutParams(
+        val rootLayout = FrameLayout(context).apply {
+            layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            // outside tap to dismiss
             setOnClickListener { popup?.dismiss() }
-            // DEBUG: uncomment to verify overlay is shown
-            // setBackgroundColor(0x11FF0000.toInt())
         }
 
-        val pw = PopupWindow(
-            root,
+        popup = PopupWindow(
+            rootLayout,
             ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            true // focusable => back button & outside dismiss work
+            ViewGroup.LayoutParams.MATCH_PARENT
         ).apply {
-            isClippingEnabled = false
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT)) // must be non-null
+            isFocusable = true
             isOutsideTouchable = true
-            elevation = 0f
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            elevation = 10f
         }
-        popup = pw
 
-        // Show FIRST so root has coordinates/window
-        pw.showAtLocation(attachTo, Gravity.NO_GRAVITY, 0, 0)
+        // Show the popup first to get proper measurements
+        popup?.showAtLocation(rootView, Gravity.NO_GRAVITY, 0, 0)
 
-        // Lay out children after attach
-        root.post {
-            // Anchor center (SCREEN coords)
-            val anchorLoc = IntArray(2)
-            anchor.getLocationOnScreen(anchorLoc)
-            val anchorCxScreen = anchorLoc[0] + anchor.width / 2f
-            val anchorCyScreen = anchorLoc[1] + anchor.height / 2f
+        rootLayout.post {
+            val anchorLocation = IntArray(2)
+            anchor.getLocationOnScreen(anchorLocation)
+            val anchorCenterX = anchorLocation[0] + anchor.width / 2f
+            val anchorCenterY = anchorLocation[1] + anchor.height / 2f
 
-            // Root origin (SCREEN coords)
-            val rootLoc = IntArray(2)
-            root.getLocationOnScreen(rootLoc)
-            val rootX = rootLoc[0].toFloat()
-            val rootY = rootLoc[1].toFloat()
+            val rootLocation = IntArray(2)
+            rootLayout.getLocationOnScreen(rootLocation)
+            val rootX = rootLocation[0].toFloat()
+            val rootY = rootLocation[1].toFloat()
 
             val itemSize = (min(anchor.width, anchor.height) * itemScale).toInt().coerceAtLeast(24)
-            val count = iconHexList.size.coerceAtLeast(1)
+            val count = iconHexList.size
             val angleStep = 360f / count
 
-            iconHexList.forEachIndexed { idx, hex ->
-                val angleDeg = idx * angleStep - 90f // start at top
+            iconHexList.forEachIndexed { index, hex ->
+                val angleDeg = index * angleStep - 90f // Start from top
                 val angleRad = Math.toRadians(angleDeg.toDouble())
 
-                // target center in SCREEN coords
-                val cxScreen = (anchorCxScreen + radiusPx * cos(angleRad)).toFloat()
-                val cyScreen = (anchorCyScreen + radiusPx * sin(angleRad)).toFloat()
+                // Calculate position in screen coordinates
+                val itemX = anchorCenterX + radiusPx * cos(angleRad).toFloat()
+                val itemY = anchorCenterY + radiusPx * sin(angleRad).toFloat()
 
-                // convert to ROOT coords
-                val cx = cxScreen - rootX
-                val cy = cyScreen - rootY
+                // Convert to root layout coordinates
+                val xInRoot = itemX - rootX
+                val yInRoot = itemY - rootY
 
-                val child = FontIcon(ctx).apply {
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                val iconView = FontIcon(context).apply {
                     setIcon(hex)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
                     gravity = Gravity.CENTER
-                    isClickable = true
-                    isFocusable = true
-                    // subtle rounded bg for better hit area
-                    background = android.graphics.drawable.GradientDrawable().apply {
-                        shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-                        cornerRadius = itemSize * 0.3f
-                        setColor(Color.parseColor("#F2FFFFFF"))
+                    setTextColor(Color.BLACK)
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.OVAL
+                        setColor(Color.WHITE)
+                        setStroke(2, Color.LTGRAY)
                     }
-                    contentDescription = "Icon $hex"
+                    layoutParams = FrameLayout.LayoutParams(itemSize, itemSize).apply {
+                        leftMargin = (xInRoot - itemSize / 2).toInt()
+                        topMargin = (yInRoot - itemSize / 2).toInt()
+                    }
+                    scaleX = 0f
+                    scaleY = 0f
+                    alpha = 0f
+                    translationX = (anchorCenterX - rootX - xInRoot)
+                    translationY = (anchorCenterY - rootY - yInRoot)
                 }
 
-                val lp = FrameLayout.LayoutParams(itemSize, itemSize).apply {
-                    leftMargin = (cx - itemSize / 2f).toInt()
-                    topMargin  = (cy - itemSize / 2f).toInt()
-                }
-                root.addView(child, lp)
+                rootLayout.addView(iconView)
 
-                // animate from anchor center (in ROOT coords)
-                val anchorCxRoot = anchorCxScreen - rootX
-                val anchorCyRoot = anchorCyScreen - rootY
-
-                child.scaleX = 0f
-                child.scaleY = 0f
-                child.alpha = 0f
-                child.translationX = (anchorCxRoot - cx)
-                child.translationY = (anchorCyRoot - cy)
-
-                child.animate()
-                    .scaleX(1f).scaleY(1f)
+                iconView.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
                     .alpha(1f)
-                    .translationX(0f).translationY(0f)
-                    .setDuration(140)
-                    .setInterpolator(DecelerateInterpolator())
+                    .translationX(0f)
+                    .translationY(0f)
+                    .setDuration(200)
+                    .setInterpolator(OvershootInterpolator())
                     .start()
 
-                child.setOnClickListener {
+                iconView.setOnClickListener {
                     onPick(hex)
-                    pw.dismiss()
+                    popup?.dismiss()
                 }
             }
         }
     }
 
-    private fun findActivity(view: View): Activity? {
-        var ctx: Context = view.context
-        while (ctx is ContextWrapper) {
-            if (ctx is Activity) return ctx
-            ctx = ctx.baseContext
+    private fun Context.findActivity(): Activity? {
+        var context = this
+        while (context is ContextWrapper) {
+            if (context is Activity) return context
+            context = context.baseContext
         }
         return null
     }
