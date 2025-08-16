@@ -7,6 +7,7 @@ package com.sina.library.views.extensions
 
 import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -62,6 +63,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.drawToBitmap
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.dynamicanimation.animation.DynamicAnimation
+import androidx.dynamicanimation.animation.SpringAnimation
+import androidx.dynamicanimation.animation.SpringForce
 import androidx.fragment.app.Fragment
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -1270,9 +1274,139 @@ object ViewExtensions {
         Log.e("TAG", "setVisibleOrGone: $dataModify")
         this.visibility = if (dataModify.equals("0")) View.GONE else View.VISIBLE
     }
-
-
+    @SuppressLint("ClickableViewAccessibility")
     fun View.makeMovableFriendly(): View.OnTouchListener {
+        val slop = ViewConfiguration.get(context).scaledTouchSlop
+
+        // Remember home
+        val homeTx = translationX
+        val homeTy = translationY
+
+        fun parentSize(): Pair<Int, Int> {
+            val p = parent as? View ?: rootView
+            val w = if (p.width > 0) p.width else resources.displayMetrics.widthPixels
+            val h = if (p.height > 0) p.height else resources.displayMetrics.heightPixels
+            return w to h
+        }
+
+        fun rIn(): Float {
+            val (w, h) = parentSize()
+            return 0.30f * minOf(w, h) // 30% snap radius
+        }
+        fun rOut(): Float = rIn() * 1.5f // must pass this once before snapping can occur
+
+        fun distToHome(tx: Float, ty: Float): Float {
+            val dx = tx - homeTx
+            val dy = ty - homeTy
+            return kotlin.math.sqrt(dx*dx + dy*dy)
+        }
+
+        fun springToHome() {
+            SpringAnimation(this, DynamicAnimation.TRANSLATION_X, homeTx).apply {
+                spring = SpringForce(homeTx).apply {
+                    dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+                    stiffness = SpringForce.STIFFNESS_LOW
+                }
+            }.start()
+            SpringAnimation(this, DynamicAnimation.TRANSLATION_Y, homeTy).apply {
+                spring = SpringForce(homeTy).apply {
+                    dampingRatio = SpringForce.DAMPING_RATIO_MEDIUM_BOUNCY
+                    stiffness = SpringForce.STIFFNESS_LOW
+                }
+            }.start()
+        }
+
+        var downX = 0f
+        var downY = 0f
+        var dragging = false
+        var snapped = false
+        var leftHome = false // becomes true only after we go beyond rOut once
+
+        val gd = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) { performLongClick() }
+            override fun onSingleTapUp(e: MotionEvent): Boolean { performClick(); return true }
+        })
+
+        val listener = View.OnTouchListener { v, ev ->
+            // if you have a FontIcon radial open, keep your bypass here
+            if (v is FontIcon && v.isRadialOpen()) return@OnTouchListener false
+
+            gd.onTouchEvent(ev)
+
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = ev.rawX; downY = ev.rawY
+                    dragging = false
+                    snapped = false
+                    leftHome = false
+                    false
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = ev.rawX - downX
+                    val dy = ev.rawY - downY
+
+                    if (!dragging && (kotlin.math.abs(dx) > slop || kotlin.math.abs(dy) > slop)) {
+                        dragging = true
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                    }
+
+                    if (!dragging) return@OnTouchListener false
+
+                    val newTx = v.translationX + dx
+                    val newTy = v.translationY + dy
+                    val d = distToHome(newTx, newTy)
+
+                    // Arm snapping only after we left home far enough once
+                    if (!leftHome && d > rOut()) leftHome = true
+
+                    if (!snapped) {
+                        // Move normally
+                        v.translationX = newTx
+                        v.translationY = newTy
+
+                        // Snap only if we already left home before and we are back within rIn
+                        if (leftHome && d <= rIn()) {
+                            snapped = true
+                            springToHome()
+                            // reset anchors to avoid jump if user keeps dragging
+                            downX = ev.rawX; downY = ev.rawY
+                        } else {
+                            downX = ev.rawX; downY = ev.rawY
+                        }
+                    } else {
+                        // Currently snapped: allow breaking out if user pulls far enough
+                        if (d > rOut()) {
+                            snapped = false
+                            leftHome = true
+                        }
+                        // keep anchors fresh
+                        downX = ev.rawX; downY = ev.rawY
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    parent?.requestDisallowInterceptTouchEvent(false)
+                    if (!snapped) {
+                        val d = distToHome(v.translationX, v.translationY)
+                        if (leftHome && d <= rIn()) {
+                            springToHome()
+                            snapped = true
+                        }
+                    }
+                    dragging = false
+                    false
+                }
+                else -> false
+            }
+        }
+
+        setOnTouchListener(listener)
+        return listener
+    }
+
+    fun View.makeMovableFriendlyold(): View.OnTouchListener {
         val slop = ViewConfiguration.get(context).scaledTouchSlop
         var downX = 0f
         var downY = 0f

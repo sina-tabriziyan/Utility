@@ -169,9 +169,9 @@ class FontIcon @JvmOverloads constructor(
     }
     private fun showInteractiveOverlay() {
         val parent = parent as? ViewGroup ?: return
-        // NEW: tell Fragment to disable movability
         onPreviewShown?.invoke()
 
+        // Create once; attach only if not already attached
         if (overlay == null) {
             overlay = RadialIconsOverlay(context).apply {
                 layoutParams = FrameLayout.LayoutParams(
@@ -179,9 +179,14 @@ class FontIcon @JvmOverloads constructor(
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
+        }
+
+        // Attach if needed
+        if (overlay?.parent == null) {
             parent.addView(overlay)
-        }else
-            (overlay?.parent as? ViewGroup)?.bringChildToFront(overlay) // ← add this
+        } else {
+            (overlay?.parent as? ViewGroup)?.bringChildToFront(overlay)
+        }
 
         parent.requestDisallowInterceptTouchEvent(true)
 
@@ -193,10 +198,13 @@ class FontIcon @JvmOverloads constructor(
             duration = overlayAnimDuration,
             interpolator = overlayInterpolator,
             onFinished = {
-                // NEW: re-enable movability after dismiss
+                // finished closing animation
                 (parent as? ViewGroup)?.requestDisallowInterceptTouchEvent(false)
                 onPreviewHidden?.invoke()
                 showingOverlay = false
+                // Optionally keep overlay attached but empty; or remove now:
+                // (overlay?.parent as? ViewGroup)?.removeView(overlay)
+                // overlay = null
             }
         )
         showingOverlay = true
@@ -204,10 +212,15 @@ class FontIcon @JvmOverloads constructor(
 
 
     private fun hideInteractiveOverlay() {
+        val parent = parent as? ViewGroup
         overlay?.hideIcons(anchor = this, duration = overlayAnimDuration) {
-            (parent as? ViewGroup)?.requestDisallowInterceptTouchEvent(false)
-            onPreviewHidden?.invoke()    // <— re-enable movability
+            parent?.requestDisallowInterceptTouchEvent(false)
+            onPreviewHidden?.invoke()
             showingOverlay = false
+
+            // SAFELY remove overlay **here**, not in onDetachedFromWindow
+            (overlay?.parent as? ViewGroup)?.removeView(overlay)
+            overlay = null
         }
     }
 
@@ -306,8 +319,6 @@ class FontIcon @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        // clean up if view is removed
-        (overlay?.parent as? ViewGroup)?.removeView(overlay)
         overlay = null
         showingOverlay = false
     }
