@@ -8,6 +8,11 @@ object Permissions {
         Manifest.permission.READ_CONTACTS,
         Manifest.permission.WRITE_CONTACTS
     )
+    val NOTIFICATIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+        emptyArray()
+    }
     val SCAN_APPS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         arrayOf(Manifest.permission.QUERY_ALL_PACKAGES)
     } else {
